@@ -22,12 +22,36 @@ alwaysApply: true
       "instruction": "For database setup, use Docker containers with PostgreSQL 15-alpine, include Adminer for database administration, and create init.sql scripts for schema initialization."
     },
     {
+      "type": "database-critical",
+      "instruction": "NEVER manually set ID fields in PostgreSQL INSERT operations. Always let PostgreSQL auto-generate IDs using SERIAL or sequences. Manually setting ID=0 causes 'duplicate key constraint' errors. Remove id field entirely from n8n PostgreSQL node 'Values to Send' section."
+    },
+    {
+      "type": "database-schema",
+      "instruction": "Use consistent field naming: snake_case in database (intern_email, log_date, created_at) but map to camelCase in frontend (internEmail, logDate, createdAt). Document field mappings clearly."
+    },
+    {
       "type": "n8n",
       "instruction": "When creating n8n workflows, prefer manual creation in the UI over API imports for webhook registration reliability. Webhooks often fail to register properly when imported via API."
     },
     {
       "type": "n8n",
       "instruction": "For n8n database integration, always configure PostgreSQL credentials first, then create workflows that use proper database nodes. Use webhook paths like 'daily-logs-db' and 'get-logs-db' for clarity."
+    },
+    {
+      "type": "n8n-postgresql",
+      "instruction": "In PostgreSQL nodes, use expressions like {{ $('Webhook').item.json.body.fieldName }} for webhook data. Data is often nested under 'body' property. Test expressions in n8n UI before deploying. Never include id field in INSERT operations."
+    },
+    {
+      "type": "n8n-response-handling",
+      "instruction": "n8n responses are often wrapped in nested objects. Frontend must handle data like response.data[0].json.fieldName. Use processing like: logsData.map(item => item.json || item) to extract actual data from n8n wrapper objects."
+    },
+    {
+      "type": "n8n-debugging",
+      "instruction": "When n8n workflows fail: 1) Check Executions tab for detailed errors, 2) Verify PostgreSQL credentials in Settings->Credentials, 3) Test database connection, 4) Check field mappings in PostgreSQL node, 5) Ensure webhook Response Mode is set correctly."
+    },
+    {
+      "type": "n8n-workflow-backup",
+      "instruction": "ALWAYS export workflows before making changes using the export-all-workflows.js script. Commit exported workflows to git. This prevents loss of working configurations during development."
     },
     {
       "type": "docker",
@@ -38,8 +62,24 @@ alwaysApply: true
       "instruction": "For React frontends, configure proxy in package.json to redirect /webhook/* requests to n8n. Frontend must be restarted after proxy configuration changes. Use relative paths for API calls, not absolute localhost URLs."
     },
     {
+      "type": "frontend-data-handling",
+      "instruction": "Frontend must handle n8n data structure correctly. Use Array.isArray() checks and .map() to extract nested json objects. Handle both success and error states with try-catch blocks and user-friendly error messages."
+    },
+    {
+      "type": "frontend-styling",
+      "instruction": "Use modern UI patterns: card-based layouts, color-coded sections, hover effects, gradient backgrounds, proper typography. Implement click-to-expand details, auto-dismissing messages, and smooth animations for professional UX."
+    },
+    {
       "type": "debugging",
       "instruction": "When troubleshooting webhook issues: 404 = not registered, 500 = registered but code error, 200 = working. Always test webhooks directly before blaming frontend issues."
+    },
+    {
+      "type": "debugging-systematic",
+      "instruction": "Follow systematic debugging order: 1) Check container status (docker ps), 2) Test database connectivity directly, 3) Verify n8n credential configuration, 4) Check workflow activation status, 5) Test webhook registration with curl, 6) Check frontend proxy settings, 7) Examine browser network tab."
+    },
+    {
+      "type": "testing-endpoints",
+      "instruction": "Create test scripts for all endpoints (test-new-endpoint.js pattern). Test both POST submissions and GET retrievals. Verify data saves to database with direct PostgreSQL queries before troubleshooting frontend display issues."
     },
     {
       "type": "code",
@@ -62,6 +102,10 @@ alwaysApply: true
       "instruction": "When creating n8n workflows, provide both JSON files for reference AND step-by-step manual creation instructions. API imports often fail for webhook registration."
     },
     {
+      "type": "workflow-field-mapping",
+      "instruction": "For n8n PostgreSQL nodes, provide exact field mappings with expressions. Document which fields are required vs optional. Always exclude id field from INSERT operations. Use {{ $now }} for created_at and updated_at timestamps."
+    },
+    {
       "type": "credentials",
       "instruction": "For database credentials in n8n, use: Host=database, Port=5432, Database=intern_tracker, User=intern_user, Password=intern_password123. Always mention this needs manual configuration in n8n UI."
     },
@@ -78,12 +122,34 @@ alwaysApply: true
       "instruction": "When fixing issues, always check in order: 1) Container status, 2) Database connectivity, 3) n8n credential configuration, 4) Workflow activation status, 5) Webhook registration, 6) Frontend proxy settings."
     },
     {
+      "type": "error-patterns",
+      "instruction": "Common error patterns: 'duplicate key constraint' = remove id field from INSERT, 'webhook not registered' = check HTTP method mismatch, 'Cannot read properties of undefined' = check data structure and field mapping, 'CORS errors' = check proxy configuration."
+    },
+    {
       "type": "admin-tools",
       "instruction": "Always include Adminer (database admin interface) at port 8080 for easy database management and debugging. Provide connection details: server=database, username=intern_user, password=intern_password123, database=intern_tracker."
     },
     {
+      "type": "version-control",
+      "instruction": "Export n8n workflows before major changes and commit to git. Use feature branches for new functionality. Write descriptive commit messages that explain both technical changes and business features implemented."
+    },
+    {
+      "type": "user-experience",
+      "instruction": "Implement auto-dismissing success messages (3-second timeout), loading states, error handling, and smooth transitions. Use icons and emojis for visual appeal. Provide clear navigation and user feedback for all actions."
+    },
+    {
       "type": "reminder",
       "instruction": "Remind me to keep logs organized by week so I can generate clean summaries later. Database structure supports this with proper date indexing and relationships."
+    },
+    {
+      "type": "data-validation",
+      "instruction": "Always validate data at multiple levels: frontend form validation, n8n workflow validation, and database constraints. Handle validation errors gracefully with user-friendly messages."
+    },
+    {
+      "type": "performance",
+      "instruction": "Use database indexes on frequently queried fields (intern_email, log_date). Limit query results with LIMIT clauses. Use proper SQL JOIN operations for related data rather than multiple separate queries."
     }
   ]
+
+
 }
