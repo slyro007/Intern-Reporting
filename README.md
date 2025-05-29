@@ -55,7 +55,7 @@ A self-hosted Docker-based system for tracking intern progress, generating weekl
 
 1. Open http://localhost:5678
 2. Complete the initial n8n setup (create admin account)
-3. Import the workflow templates from `/n8n-workflows/` (you'll create these)
+3. Import the workflow templates from `/n8n-workflows/`
 4. Configure your OpenAI API credentials in n8n settings
 
 ## 📁 Project Structure
@@ -261,6 +261,6 @@ For technical support with this tracking system, contact the Wolff Logics develo
 
 ---
 
-**Last Updated**: January 2024  
+**Last Updated**: May 2025  
 **Version**: 1.0.0  
-**Developed for**: Wolff Logics MSP Intern Program 
+**Developed for**: Wolff Logics MSP Intern Program
