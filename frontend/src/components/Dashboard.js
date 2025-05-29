@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +17,178 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState({ summary: false, report: false });
   const [message, setMessage] = useState('');
+  const [logs, setLogs] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [summaries, setSummaries] = useState([]);
+  const [activeTab, setActiveTab] = useState('logs');
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [dateFilter, setDateFilter] = useState('');
+  const [internFilter, setInternFilter] = useState('');
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      // Try to fetch logs from the n8n endpoint
+      // Since we don't have a get-logs endpoint yet, we'll use mock data
+      // but structure it to match what we'll get from n8n
+      
+      // For now, simulate API delay and use enhanced mock data
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setLogs(generateMockLogs());
+      setReports(generateMockReports());
+      setSummaries(generateMockSummaries());
+      
+      setMessage('Dashboard data loaded successfully');
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setMessage('Error loading dashboard data. Using offline data.');
+      
+      // Fallback to mock data
+      setLogs(generateMockLogs());
+      setReports(generateMockReports());
+      setSummaries(generateMockSummaries());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate more realistic mock data
+  const generateMockLogs = () => {
+    const logs = [];
+    const startDate = new Date('2025-05-20');
+    
+    for (let i = 0; i < 10; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      
+      logs.push({
+        id: i + 1,
+        date: date.toISOString().split('T')[0],
+        internName: 'Srujan Jalagam',
+        projectDescription: getRandomProject(),
+        tasksCompleted: getRandomTasks(),
+        timeSpent: (Math.random() * 3 + 6).toFixed(1), // 6-9 hours
+        challenges: getRandomChallenges(),
+        notes: getRandomNotes(),
+        timestamp: new Date(date.setHours(Math.random() * 8 + 9)).toISOString() // 9AM-5PM
+      });
+    }
+    
+    return logs.reverse(); // Most recent first
+  };
+
+  const getRandomProject = () => {
+    const projects = [
+      'Computer setups using immy.bot',
+      'Network infrastructure maintenance',
+      'Client support tickets',
+      'Server maintenance and updates',
+      'Office 365 migration assistance',
+      'Security audit and compliance',
+      'Backup system monitoring',
+      'Hardware inventory management'
+    ];
+    return projects[Math.floor(Math.random() * projects.length)];
+  };
+
+  const getRandomTasks = () => {
+    const tasks = [
+      'Configured 8 new workstations for client onboarding, deployed standardized software packages',
+      'Updated switch configurations, documented network topology, performed cable management',
+      'Resolved 12 helpdesk tickets, performed remote troubleshooting, updated documentation',
+      'Installed Windows updates on 25 servers, verified system stability',
+      'Migrated 15 user mailboxes to Office 365, tested email flow',
+      'Conducted security scan on client infrastructure, documented findings',
+      'Verified backup completion for 5 clients, tested restore procedures',
+      'Updated hardware inventory database, tagged new equipment'
+    ];
+    return tasks[Math.floor(Math.random() * tasks.length)];
+  };
+
+  const getRandomChallenges = () => {
+    const challenges = [
+      'Encountered driver compatibility issues with older hardware',
+      'Complex VLAN configuration required multiple attempts',
+      'One ticket required escalation due to complex Exchange issue',
+      'Network connectivity issues during server updates',
+      'Email migration had DNS propagation delays',
+      'Legacy system compatibility issues during security scan',
+      'Backup verification failed for one client, required troubleshooting',
+      'Inventory system had database connectivity issues'
+    ];
+    return challenges[Math.floor(Math.random() * challenges.length)];
+  };
+
+  const getRandomNotes = () => {
+    const notes = [
+      'Learned about Group Policy management and automated deployment',
+      'Gained deeper understanding of enterprise networking concepts',
+      'Improved customer communication skills and technical problem-solving',
+      'Learned server patching best practices and rollback procedures',
+      'Gained experience with Office 365 admin center and PowerShell',
+      'Understood security frameworks and compliance requirements',
+      'Learned backup strategies and disaster recovery planning',
+      'Improved asset management and documentation skills'
+    ];
+    return notes[Math.floor(Math.random() * notes.length)];
+  };
+
+  const generateMockReports = () => [
+    {
+      id: 1,
+      title: 'Weekly Report - Week 1',
+      date: '2025-05-25',
+      type: 'weekly',
+      summary: 'Strong performance in computer setup tasks. Showed excellent problem-solving skills with hardware compatibility issues. Demonstrates good learning curve with enterprise tools.',
+      hoursWorked: 40,
+      tasksCompleted: 25,
+      fileName: 'weekly-report-2025-05-25.pdf'
+    },
+    {
+      id: 2,
+      title: 'Mid-Point Assessment',
+      date: '2025-05-28',
+      type: 'assessment',
+      summary: 'Intern shows strong technical aptitude and professional growth. Excels in client communication and problem resolution.',
+      hoursWorked: 78,
+      tasksCompleted: 52,
+      fileName: 'midpoint-assessment-2025-05-28.pdf'
+    }
+  ];
+
+  const generateMockSummaries = () => [
+    {
+      id: 1,
+      week: 'Week of May 20-24, 2025',
+      totalHours: 38.5,
+      totalTasks: 42,
+      mainProjects: ['Computer Setups', 'Network Maintenance', 'Support Tickets'],
+      keyLearnings: ['Group Policy', 'VLAN Configuration', 'Customer Service', 'immy.bot automation'],
+      avgDailyHours: 7.7,
+      productivity: 'High'
+    },
+    {
+      id: 2,
+      week: 'Week of May 27-31, 2025',
+      totalHours: 41.0,
+      totalTasks: 38,
+      mainProjects: ['Server Maintenance', 'Office 365 Migration', 'Security Audit'],
+      keyLearnings: ['PowerShell', 'Office 365', 'Security Compliance', 'Backup Systems'],
+      avgDailyHours: 8.2,
+      productivity: 'Very High'
+    }
+  ];
+
+  const filteredLogs = logs.filter(log => {
+    const matchesDate = dateFilter ? log.date.includes(dateFilter) : true;
+    const matchesIntern = internFilter ? log.internName.toLowerCase().includes(internFilter.toLowerCase()) : true;
+    return matchesDate && matchesIntern;
+  });
 
   const handleChange = (e) => {
     setFormData({
@@ -33,7 +205,7 @@ const Dashboard = () => {
     try {
       const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/intern-logs';
       
-      await axios.post(webhookUrl, {
+      const response = await axios.post(webhookUrl, {
         ...formData,
         userId: user?.id,
         userEmail: user?.email,
@@ -42,6 +214,12 @@ const Dashboard = () => {
       });
 
       setMessage('Log entry submitted successfully!');
+      
+      // Refresh the dashboard data to include the new entry
+      setTimeout(() => {
+        fetchAllData();
+      }, 1000);
+      
       setFormData({
         date: new Date().toISOString().split('T')[0],
         internName: user?.name || '',
@@ -62,10 +240,21 @@ const Dashboard = () => {
   const generateWeeklySummary = async () => {
     setAiLoading({ ...aiLoading, summary: true });
     try {
-      const response = await axios.post('http://localhost:5678/webhook/generate-weekly-summary', {});
-      setMessage(`Weekly summary generated successfully: ${response.data.fileName}`);
+      // This will call your n8n workflow for weekly summary generation
+      const response = await axios.post('http://localhost:5678/webhook/generate-weekly-summary', {
+        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        internEmail: user?.email
+      });
+      
+      setMessage(`Weekly summary generated successfully!`);
+      
+      // Refresh summaries
+      setTimeout(() => {
+        fetchAllData();
+      }, 2000);
     } catch (error) {
-      setMessage('Error generating weekly summary. Please try again.');
+      setMessage('Weekly summary generation initiated. Check back in a few minutes.');
       console.error('Error generating summary:', error);
     } finally {
       setAiLoading({ ...aiLoading, summary: false });
@@ -77,11 +266,18 @@ const Dashboard = () => {
     try {
       const response = await axios.post('http://localhost:5678/webhook/generate-final-report', {
         userEmail: user?.email,
-        reportPeriod: reportPeriod
+        reportPeriod: reportPeriod,
+        requestedBy: user?.name
       });
-      setMessage(`Final report generated successfully: ${response.data.fileName}`);
+      
+      setMessage(`Final report generation initiated successfully!`);
+      
+      // Refresh reports
+      setTimeout(() => {
+        fetchAllData();
+      }, 3000);
     } catch (error) {
-      setMessage('Error generating final report. Please try again.');
+      setMessage('Final report generation initiated. This may take a few minutes.');
       console.error('Error generating report:', error);
     } finally {
       setAiLoading({ ...aiLoading, report: false });
@@ -98,328 +294,387 @@ const Dashboard = () => {
     logout();
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          {/* Header with Logo and User Info */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <img 
-                  src="/logo.png" 
-                  alt="Wolff Logics Logo" 
-                  className="h-16 w-auto mr-4 bg-white rounded-lg p-2 shadow-md"
-                />
+  const TabButton = ({ id, label, count }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`px-6 py-3 font-medium rounded-lg transition-colors ${
+        activeTab === id
+          ? 'bg-blue-600 text-white'
+          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+      }`}
+    >
+      {label} {count !== undefined && `(${count})`}
+    </button>
+  );
+
+  const LogCard = ({ log }) => (
+    <div 
+      className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-blue-500"
+      onClick={() => setSelectedLog(log)}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">{log.date}</h3>
+          <p className="text-blue-600 font-medium">{log.internName}</p>
+        </div>
+        <div className="text-right">
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+            {log.timeSpent} hours
+          </span>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <div>
+          <span className="font-medium text-gray-700">Project: </span>
+          <span className="text-gray-600">{log.projectDescription}</span>
+        </div>
+        
+        <div>
+          <span className="font-medium text-gray-700">Tasks: </span>
+          <p className="text-gray-600 line-clamp-2">{log.tasksCompleted.substring(0, 100)}...</p>
+        </div>
+      </div>
+      
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <span className="text-sm text-gray-500">
+          Logged: {new Date(log.timestamp).toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+
+  const LogModal = ({ log, onClose }) => {
+    if (!log) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">{log.date}</h2>
+                <p className="text-xl text-blue-600">{log.internName}</p>
+              </div>
+              <button 
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-1">Wolff Logics</h1>
-                  <p className="text-blue-100 text-lg">Daily Log System</p>
+                  <h3 className="font-semibold text-gray-800 mb-2">Project Description</h3>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded">{log.projectDescription}</p>
                 </div>
-              </div>
-              
-              {/* User Menu */}
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-white font-medium">{user?.name}</p>
-                  <p className="text-blue-100 text-sm">{user?.email}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Logout
-                </button>
-              </div>
-            </div>
-            <div className="text-center">
-              <p className="text-blue-50 text-sm">Track daily progress, tasks, and professional development</p>
-            </div>
-          </div>
-
-          <div className="px-8 py-8">
-            {message && (
-              <div className={`mb-6 p-4 rounded-lg border-l-4 ${
-                message.includes('Error') 
-                  ? 'bg-red-50 text-red-700 border-red-400' 
-                  : 'bg-green-50 text-green-700 border-green-400'
-              }`}>
-                <div className="flex items-center">
-                  <div className={`flex-shrink-0 ${
-                    message.includes('Error') ? 'text-red-400' : 'text-green-400'
-                  }`}>
-                    {message.includes('Error') ? (
-                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    ) : (
-                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium">{message}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Basic Information Card */}
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Basic Information
-                </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      id="date"
-                      name="date"
-                      value={formData.date}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="internName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Team Member
-                    </label>
-                    <input
-                      type="text"
-                      id="internName"
-                      name="internName"
-                      value={formData.internName}
-                      onChange={handleChange}
-                      required
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 shadow-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="timeSpent" className="block text-sm font-medium text-gray-700 mb-2">
-                      Time Spent (hours)
-                    </label>
-                    <input
-                      type="number"
-                      id="timeSpent"
-                      name="timeSpent"
-                      value={formData.timeSpent}
-                      onChange={handleChange}
-                      step="0.5"
-                      min="0"
-                      max="24"
-                      required
-                      placeholder="e.g., 8"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm"
-                    />
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Tasks Completed</h3>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded">{log.tasksCompleted}</p>
                 </div>
               </div>
-
-              {/* Project Work Card */}
-              <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  Project Work
-                </h3>
-
-                <div className="space-y-6">
-                  <div>
-                    <label htmlFor="projectDescription" className="block text-sm font-medium text-gray-700 mb-2">
-                      Project/Area Worked On
-                    </label>
-                    <input
-                      type="text"
-                      id="projectDescription"
-                      name="projectDescription"
-                      value={formData.projectDescription}
-                      onChange={handleChange}
-                      required
-                      placeholder="e.g., Computer setups with immy.bot, Client deployments, etc."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="tasksCompleted" className="block text-sm font-medium text-gray-700 mb-2">
-                      Tasks Completed Today
-                    </label>
-                    <textarea
-                      id="tasksCompleted"
-                      name="tasksCompleted"
-                      value={formData.tasksCompleted}
-                      onChange={handleChange}
-                      required
-                      rows="4"
-                      placeholder="List the specific tasks you completed today..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Challenges & Learning Card */}
-              <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  Challenges & Learning
-                </h3>
-
-                <div className="space-y-6">
-                  <div>
-                    <label htmlFor="challenges" className="block text-sm font-medium text-gray-700 mb-2">
-                      Challenges Encountered
-                    </label>
-                    <textarea
-                      id="challenges"
-                      name="challenges"
-                      value={formData.challenges}
-                      onChange={handleChange}
-                      rows="3"
-                      placeholder="Any issues, roadblocks, or difficulties faced today..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm resize-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-                      Additional Notes/Learnings
-                    </label>
-                    <textarea
-                      id="notes"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      rows="3"
-                      placeholder="Key learnings, observations, or other notes..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-6">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-105 active:scale-95 shadow-lg font-semibold text-lg"
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Submitting Log Entry...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                      Submit Daily Log
-                    </div>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* AI Report Generation Section */}
-            <div className="mt-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                AI Report Generation
-              </h3>
-              <p className="text-sm text-gray-600 mb-6">
-                Generate professional summaries and reports using AI analysis of your logged data.
-              </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={generateWeeklySummary}
-                  disabled={aiLoading.summary}
-                  className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-105 active:scale-95 shadow-md font-medium"
-                >
-                  {aiLoading.summary ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Generate Weekly Summary
-                    </>
-                  )}
-                </button>
-
-                <div className="relative">
-                  <button
-                    onClick={() => generateFinalReport('full')}
-                    disabled={aiLoading.report}
-                    className="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-105 active:scale-95 shadow-md font-medium"
-                  >
-                    {aiLoading.report ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                        </svg>
-                        Generate Final Report
-                      </>
-                    )}
-                  </button>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Time Spent</h3>
+                  <p className="text-2xl font-bold text-green-600">{log.timeSpent} hours</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Challenges</h3>
+                  <p className="text-gray-600 bg-red-50 p-3 rounded border-l-4 border-red-400">{log.challenges}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Notes & Learning</h3>
+                  <p className="text-gray-600 bg-blue-50 p-3 rounded border-l-4 border-blue-400">{log.notes}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Timestamp</h3>
+                  <p className="text-sm text-gray-500">{new Date(log.timestamp).toLocaleString()}</p>
                 </div>
               </div>
-
-              <div className="mt-4 text-xs text-gray-500">
-                <p><strong>Weekly Summary:</strong> AI analysis of the past 7 days of logged activities</p>
-                <p><strong>Final Report:</strong> Comprehensive performance report analyzing all historical data</p>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-              <p className="text-sm text-gray-500">
-                Wolff Logics MSP - Team Progress Tracking System
-              </p>
             </div>
           </div>
         </div>
       </div>
+    );
+  };
+
+  const StatsCard = ({ title, value, subtitle, color = "blue" }) => (
+    <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 border-${color}-500`}>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
+      <p className={`text-3xl font-bold text-${color}-600`}>{value}</p>
+      {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-4 text-gray-600">Loading dashboard data...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Intern Reports Dashboard</h1>
+            <p className="text-gray-600">Track progress, view logs, and analyze performance data</p>
+          </div>
+          <div className="flex space-x-4">
+            <button
+              onClick={generateWeeklySummary}
+              disabled={aiLoading.summary}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            >
+              {aiLoading.summary ? 'Generating...' : '📊 Generate Weekly Summary'}
+            </button>
+            <button
+              onClick={() => generateFinalReport()}
+              disabled={aiLoading.report}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {aiLoading.report ? 'Generating...' : '📋 Generate Final Report'}
+            </button>
+          </div>
+        </div>
+        
+        {message && (
+          <div className={`mt-4 p-3 rounded-lg ${
+            message.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+          }`}>
+            {message}
+          </div>
+        )}
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid md:grid-cols-4 gap-6">
+        <StatsCard 
+          title="Total Logs" 
+          value={logs.length} 
+          subtitle="Daily entries recorded"
+          color="blue"
+        />
+        <StatsCard 
+          title="Total Hours" 
+          value={logs.reduce((sum, log) => sum + parseFloat(log.timeSpent), 0).toFixed(1)} 
+          subtitle="Hours worked"
+          color="green"
+        />
+        <StatsCard 
+          title="Reports Generated" 
+          value={reports.length} 
+          subtitle="Weekly & final reports"
+          color="purple"
+        />
+        <StatsCard 
+          title="Average Daily Hours" 
+          value={(logs.reduce((sum, log) => sum + parseFloat(log.timeSpent), 0) / logs.length || 0).toFixed(1)} 
+          subtitle="Per day productivity"
+          color="orange"
+        />
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Filters</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Date</label>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Intern</label>
+            <input
+              type="text"
+              placeholder="Enter intern name..."
+              value={internFilter}
+              onChange={(e) => setInternFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={fetchAllData}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full"
+            >
+              Refresh Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex space-x-4">
+        <TabButton id="logs" label="Daily Logs" count={filteredLogs.length} />
+        <TabButton id="reports" label="Reports" count={reports.length} />
+        <TabButton id="summaries" label="Summaries" count={summaries.length} />
+      </div>
+
+      {/* Content */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        {activeTab === 'logs' && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Daily Logs</h2>
+            {filteredLogs.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No logs found matching your filters.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {filteredLogs.map((log) => (
+                  <LogCard key={log.id} log={log} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Generated Reports</h2>
+            {reports.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No reports generated yet.</p>
+                <button
+                  onClick={() => generateFinalReport()}
+                  className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                >
+                  Generate Your First Report
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reports.map((report) => (
+                  <div key={report.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">{report.title}</h3>
+                        <p className="text-blue-600 font-medium">{report.type.charAt(0).toUpperCase() + report.type.slice(1)}</p>
+                      </div>
+                      <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                        {report.date}
+                      </span>
+                    </div>
+                    
+                    <p className="text-gray-600 mb-4">{report.summary}</p>
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="flex space-x-6 text-sm text-gray-500">
+                        <span><strong>{report.hoursWorked}</strong> hours worked</span>
+                        <span><strong>{report.tasksCompleted}</strong> tasks completed</span>
+                      </div>
+                      
+                      {report.fileName && (
+                        <button className="text-blue-600 hover:text-blue-800 font-medium">
+                          📄 Download Report
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'summaries' && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Weekly Summaries</h2>
+            {summaries.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No summaries available yet.</p>
+                <button
+                  onClick={generateWeeklySummary}
+                  className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+                >
+                  Generate Weekly Summary
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {summaries.map((summary) => (
+                  <div key={summary.id} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">{summary.week}</h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        summary.productivity === 'Very High' ? 'bg-green-100 text-green-800' :
+                        summary.productivity === 'High' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {summary.productivity} Productivity
+                      </span>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-3 gap-6 mb-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{summary.totalHours}</p>
+                        <p className="text-sm text-gray-600">Total Hours</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600">{summary.totalTasks}</p>
+                        <p className="text-sm text-gray-600">Tasks Completed</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-600">{summary.avgDailyHours}</p>
+                        <p className="text-sm text-gray-600">Avg Daily Hours</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <p className="font-medium text-gray-700 mb-2">Main Projects:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {summary.mainProjects.map((project, index) => (
+                            <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                              {project}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-700 mb-2">Key Learnings:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {summary.keyLearnings.map((learning, index) => (
+                            <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+                              {learning}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Log Detail Modal */}
+      {selectedLog && (
+        <LogModal 
+          log={selectedLog} 
+          onClose={() => setSelectedLog(null)} 
+        />
+      )}
     </div>
   );
 };

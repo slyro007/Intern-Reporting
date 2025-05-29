@@ -32,6 +32,9 @@ services:
       - N8N_CORS_CREDENTIALS=true
       - N8N_DISABLE_UI=false
       - GENERIC_TIMEZONE=America/Chicago
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_api_key_here}
+      - N8N_PUBLIC_API_DISABLED=false
+      - N8N_API_KEY_HEADER=X-N8N-API-KEY
     restart: unless-stopped
 
 volumes:
