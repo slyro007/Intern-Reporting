@@ -10,32 +10,32 @@ const InternDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('submit-log');
-  const [myLogs, setMyLogs] = useState([]);
-  const [myEvaluations, setMyEvaluations] = useState([]);
-  const [selectedLog, setSelectedLog] = useState(null);
-  const [selectedEvaluation, setSelectedEvaluation] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // Daily log form state
-  const [dailyLog, setDailyLog] = useState({
-    date: new Date().toISOString().split('T')[0],
+  const [logFormData, setLogFormData] = useState({
+    internEmail: user?.email || '',
+    internName: user?.name || '',
+    logDate: new Date().toISOString().split('T')[0],
     projectDescription: '',
     tasksCompleted: '',
     timeSpent: '',
     challenges: '',
     notes: ''
   });
-
-  // Self evaluation form state
-  const [selfEval, setSelfEval] = useState({
+  const [evalFormData, setEvalFormData] = useState({
+    internEmail: user?.email || '',
+    internName: user?.name || '',
     weekStartDate: '',
     weekEndDate: '',
     accomplishments: '',
     challenges: '',
     learnings: '',
     goals: '',
-    productivity: '3'
+    productivity: 3
   });
+  const [myLogs, setMyLogs] = useState([]);
+  const [myEvaluations, setMyEvaluations] = useState([]);
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [selectedEvaluation, setSelectedEvaluation] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Helper function to format dates in local timezone
   const formatLocalDateTime = (dateString) => {
@@ -121,17 +121,17 @@ const InternDashboard = () => {
     
     try {
       await axios.post('/webhook/daily-logs-new', {
-        ...dailyLog,
-        internEmail: user?.email,
-        internName: user?.name,
+        ...logFormData,
         timestamp: new Date().toISOString()
       });
       
       setMessage('Daily log submitted successfully!');
       
       // Reset form
-      setDailyLog({
-        date: new Date().toISOString().split('T')[0],
+      setLogFormData({
+        internEmail: user?.email || '',
+        internName: user?.name || '',
+        logDate: new Date().toISOString().split('T')[0],
         projectDescription: '',
         tasksCompleted: '',
         timeSpent: '',
@@ -162,23 +162,23 @@ const InternDashboard = () => {
     
     try {
       await axios.post('/webhook/submit-self-evaluation', {
-        ...selfEval,
-        internEmail: user?.email,
-        internName: user?.name,
+        ...evalFormData,
         timestamp: new Date().toISOString()
       });
       
       setMessage('Self-evaluation submitted successfully!');
       
       // Reset form
-      setSelfEval({
+      setEvalFormData({
+        internEmail: user?.email || '',
+        internName: user?.name || '',
         weekStartDate: '',
         weekEndDate: '',
         accomplishments: '',
         challenges: '',
         learnings: '',
         goals: '',
-        productivity: '3'
+        productivity: 3
       });
 
       // Refresh data after successful submission
@@ -363,8 +363,8 @@ const InternDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
                     <input
                       type="date"
-                      value={dailyLog.date}
-                      onChange={(e) => setDailyLog({ ...dailyLog, date: e.target.value })}
+                      value={logFormData.logDate}
+                      onChange={(e) => setLogFormData({ ...logFormData, logDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       required
                     />
@@ -375,8 +375,8 @@ const InternDashboard = () => {
                     <input
                       type="number"
                       step="0.5"
-                      value={dailyLog.timeSpent}
-                      onChange={(e) => setDailyLog({ ...dailyLog, timeSpent: e.target.value })}
+                      value={logFormData.timeSpent}
+                      onChange={(e) => setLogFormData({ ...logFormData, timeSpent: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="e.g., 8"
                       required
@@ -387,8 +387,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Description</label>
                   <textarea
-                    value={dailyLog.projectDescription}
-                    onChange={(e) => setDailyLog({ ...dailyLog, projectDescription: e.target.value })}
+                    value={logFormData.projectDescription}
+                    onChange={(e) => setLogFormData({ ...logFormData, projectDescription: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24 resize-none"
                     placeholder="Describe the main project or area you worked on today..."
                     required
@@ -398,8 +398,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tasks Completed</label>
                   <textarea
-                    value={dailyLog.tasksCompleted}
-                    onChange={(e) => setDailyLog({ ...dailyLog, tasksCompleted: e.target.value })}
+                    value={logFormData.tasksCompleted}
+                    onChange={(e) => setLogFormData({ ...logFormData, tasksCompleted: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24 resize-none"
                     placeholder="List the specific tasks you completed today..."
                     required
@@ -409,8 +409,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Challenges Faced</label>
                   <textarea
-                    value={dailyLog.challenges}
-                    onChange={(e) => setDailyLog({ ...dailyLog, challenges: e.target.value })}
+                    value={logFormData.challenges}
+                    onChange={(e) => setLogFormData({ ...logFormData, challenges: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-20 resize-none"
                     placeholder="Describe any challenges or obstacles you encountered..."
                   />
@@ -419,8 +419,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Notes</label>
                   <textarea
-                    value={dailyLog.notes}
-                    onChange={(e) => setDailyLog({ ...dailyLog, notes: e.target.value })}
+                    value={logFormData.notes}
+                    onChange={(e) => setLogFormData({ ...logFormData, notes: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-20 resize-none"
                     placeholder="Any additional notes, learnings, or thoughts..."
                   />
@@ -447,8 +447,8 @@ const InternDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Week Start Date</label>
                     <input
                       type="date"
-                      value={selfEval.weekStartDate}
-                      onChange={(e) => setSelfEval({ ...selfEval, weekStartDate: e.target.value })}
+                      value={evalFormData.weekStartDate}
+                      onChange={(e) => setEvalFormData({ ...evalFormData, weekStartDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       required
                     />
@@ -458,8 +458,8 @@ const InternDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Week End Date</label>
                     <input
                       type="date"
-                      value={selfEval.weekEndDate}
-                      onChange={(e) => setSelfEval({ ...selfEval, weekEndDate: e.target.value })}
+                      value={evalFormData.weekEndDate}
+                      onChange={(e) => setEvalFormData({ ...evalFormData, weekEndDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       required
                     />
@@ -469,8 +469,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Key Accomplishments</label>
                   <textarea
-                    value={selfEval.accomplishments}
-                    onChange={(e) => setSelfEval({ ...selfEval, accomplishments: e.target.value })}
+                    value={evalFormData.accomplishments}
+                    onChange={(e) => setEvalFormData({ ...evalFormData, accomplishments: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24 resize-none"
                     placeholder="What were your main achievements this week?"
                     required
@@ -480,8 +480,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Challenges & How You Overcame Them</label>
                   <textarea
-                    value={selfEval.challenges}
-                    onChange={(e) => setSelfEval({ ...selfEval, challenges: e.target.value })}
+                    value={evalFormData.challenges}
+                    onChange={(e) => setEvalFormData({ ...evalFormData, challenges: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24 resize-none"
                     placeholder="Describe any challenges and your approach to solving them..."
                   />
@@ -490,8 +490,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Key Learnings</label>
                   <textarea
-                    value={selfEval.learnings}
-                    onChange={(e) => setSelfEval({ ...selfEval, learnings: e.target.value })}
+                    value={evalFormData.learnings}
+                    onChange={(e) => setEvalFormData({ ...evalFormData, learnings: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24 resize-none"
                     placeholder="What new skills or knowledge did you gain?"
                     required
@@ -501,8 +501,8 @@ const InternDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Goals for Next Week</label>
                   <textarea
-                    value={selfEval.goals}
-                    onChange={(e) => setSelfEval({ ...selfEval, goals: e.target.value })}
+                    value={evalFormData.goals}
+                    onChange={(e) => setEvalFormData({ ...evalFormData, goals: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24 resize-none"
                       placeholder="What do you want to focus on or achieve next week?"
                       required
@@ -512,8 +512,8 @@ const InternDashboard = () => {
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Productivity Rating (1-5)</label>
                   <select
-                    value={selfEval.productivity}
-                    onChange={(e) => setSelfEval({ ...selfEval, productivity: e.target.value })}
+                    value={evalFormData.productivity}
+                    onChange={(e) => setEvalFormData({ ...evalFormData, productivity: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       required
                   >
