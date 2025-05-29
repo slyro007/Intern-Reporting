@@ -3,8 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const Dashboard = () => {
-  const { user, logout, hasPermission, isAdmin, isIntern } = useAuth();
+const AdminDashboard = () => {
+  const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   
   const [loading, setLoading] = useState(false);
@@ -13,36 +13,12 @@ const Dashboard = () => {
   const [logs, setLogs] = useState([]);
   const [reports, setReports] = useState([]);
   const [summaries, setSummaries] = useState([]);
-  const [activeTab, setActiveTab] = useState(isIntern() ? 'submit-log' : 'logs');
-  const [selectedLog, setSelectedLog] = useState(null);
+  const [activeTab, setActiveTab] = useState('logs');
   const [dateFilter, setDateFilter] = useState('');
   const [internFilter, setInternFilter] = useState('');
 
-  // Daily log form state
-  const [dailyLog, setDailyLog] = useState({
-    date: new Date().toISOString().split('T')[0],
-    projectDescription: '',
-    tasksCompleted: '',
-    timeSpent: '',
-    challenges: '',
-    notes: ''
-  });
-
-  // Self evaluation form state
-  const [selfEval, setSelfEval] = useState({
-    weekStartDate: '',
-    weekEndDate: '',
-    accomplishments: '',
-    challenges: '',
-    learnings: '',
-    goals: '',
-    productivity: '3'
-  });
-
   useEffect(() => {
-    if (!isIntern()) {
-      fetchAllData();
-    }
+    fetchAllData();
   }, []);
 
   const fetchAllData = async () => {
@@ -54,7 +30,7 @@ const Dashboard = () => {
       setReports([]);
       setSummaries([]);
       
-      setMessage('Dashboard loaded. No data entries yet - submit your first log!');
+      setMessage('Admin dashboard loaded. No data entries yet - waiting for intern submissions!');
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       setMessage('Error loading dashboard data. Please try again.');
@@ -63,69 +39,6 @@ const Dashboard = () => {
       setLogs([]);
       setReports([]);
       setSummaries([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const submitDailyLog = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      await axios.post('http://localhost:5678/webhook/submit-daily-log', {
-        ...dailyLog,
-        internEmail: user?.email,
-        internName: user?.name,
-        timestamp: new Date().toISOString()
-      });
-      
-      setMessage('Daily log submitted successfully!');
-      
-      // Reset form
-      setDailyLog({
-        date: new Date().toISOString().split('T')[0],
-        projectDescription: '',
-        tasksCompleted: '',
-        timeSpent: '',
-        challenges: '',
-        notes: ''
-      });
-    } catch (error) {
-      setMessage('Daily log submitted successfully! (Webhook will process it)');
-      console.error('Error submitting log:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const submitSelfEval = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      await axios.post('http://localhost:5678/webhook/submit-self-evaluation', {
-        ...selfEval,
-        internEmail: user?.email,
-        internName: user?.name,
-        timestamp: new Date().toISOString()
-      });
-      
-      setMessage('Self-evaluation submitted successfully!');
-      
-      // Reset form
-      setSelfEval({
-        weekStartDate: '',
-        weekEndDate: '',
-        accomplishments: '',
-        challenges: '',
-        learnings: '',
-        goals: '',
-        productivity: '3'
-      });
-    } catch (error) {
-      setMessage('Self-evaluation submitted successfully! (Webhook will process it)');
-      console.error('Error submitting evaluation:', error);
     } finally {
       setLoading(false);
     }
@@ -199,124 +112,64 @@ const Dashboard = () => {
   );
 
   const LogCard = ({ log }) => (
-    <div 
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-blue-500 dark:border-blue-400 border border-gray-200 dark:border-gray-700"
-      onClick={() => setSelectedLog(log)}
-    >
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{log.date}</h3>
-          <p className="text-blue-600 dark:text-blue-400 font-medium">{log.internName}</p>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{log.internName}</h3>
+          <p className="text-blue-600 dark:text-blue-400 font-medium">{log.date}</p>
         </div>
-        <div className="text-right">
-          <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full text-sm">
-            {log.timeSpent} hours
-          </span>
-        </div>
+        <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm">
+          {log.timeSpent}h worked
+        </span>
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div>
-          <span className="font-medium text-gray-700 dark:text-gray-300">Project: </span>
-          <span className="text-gray-600 dark:text-gray-400">{log.projectDescription}</span>
+          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Project:</p>
+          <p className="text-gray-600 dark:text-gray-400">{log.projectDescription}</p>
         </div>
         
         <div>
-          <span className="font-medium text-gray-700 dark:text-gray-300">Tasks: </span>
-          <p className="text-gray-600 dark:text-gray-400 line-clamp-2">{log.tasksCompleted.substring(0, 100)}...</p>
+          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Tasks Completed:</p>
+          <p className="text-gray-600 dark:text-gray-400">{log.tasksCompleted}</p>
         </div>
-      </div>
-      
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          Logged: {new Date(log.timestamp).toLocaleString()}
-        </span>
+        
+        {log.challenges && (
+          <div>
+            <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Challenges:</p>
+            <p className="text-gray-600 dark:text-gray-400">{log.challenges}</p>
+          </div>
+        )}
+        
+        {log.notes && (
+          <div>
+            <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Notes:</p>
+            <p className="text-gray-600 dark:text-gray-400">{log.notes}</p>
+          </div>
+        )}
       </div>
     </div>
   );
-
-  const LogModal = ({ log, onClose }) => {
-    if (!log) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
-          <div className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{log.date}</h2>
-                <p className="text-xl text-blue-600">{log.internName}</p>
-              </div>
-              <button 
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Project Description</h3>
-                  <p className="text-gray-600 bg-gray-50 p-3 rounded">{log.projectDescription}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Tasks Completed</h3>
-                  <p className="text-gray-600 bg-gray-50 p-3 rounded">{log.tasksCompleted}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Time Spent</h3>
-                  <p className="text-2xl font-bold text-green-600">{log.timeSpent} hours</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Challenges</h3>
-                  <p className="text-gray-600 bg-red-50 p-3 rounded border-l-4 border-red-400">{log.challenges}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Notes & Learning</h3>
-                  <p className="text-gray-600 bg-blue-50 p-3 rounded border-l-4 border-blue-400">{log.notes}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Timestamp</h3>
-                  <p className="text-sm text-gray-500">{new Date(log.timestamp).toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const StatsCard = ({ title, value, subtitle, color = "blue" }) => (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-${color}-500 dark:border-${color}-400 border border-gray-200 dark:border-gray-700`}>
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">{title}</h3>
-      <p className={`text-3xl font-bold text-${color}-600 dark:text-${color}-400`}>{value}</p>
-      {subtitle && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>}
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+      <div className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400 mb-2`}>{value}</div>
+      <div className="text-gray-800 dark:text-white font-medium">{title}</div>
+      <div className="text-gray-600 dark:text-gray-400 text-sm">{subtitle}</div>
     </div>
   );
 
-  // Dark mode toggle button component
   const ThemeToggle = () => (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg bg-white/20 hover:bg-white/30 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-      aria-label="Toggle dark mode"
+      className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors"
     >
       {isDarkMode ? (
-        <svg className="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
         </svg>
       ) : (
-        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
         </svg>
       )}
@@ -334,7 +187,6 @@ const Dashboard = () => {
     );
   }
 
-  // Admin Dashboard
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -633,4 +485,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default AdminDashboard; 

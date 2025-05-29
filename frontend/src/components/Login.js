@@ -34,7 +34,16 @@ const Login = () => {
     try {
       const result = await login(formData.email, formData.password);
       if (result.success) {
-        navigate('/dashboard');
+        // Redirect based on user role
+        const userRole = result.user?.role;
+        if (userRole === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (userRole === 'intern') {
+          navigate('/intern-dashboard');
+        } else {
+          // Fallback to login if role is not recognized
+          navigate('/login');
+        }
       }
     } catch (error) {
       setError(error.message || 'Login failed. Please try again.');

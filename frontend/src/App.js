@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard';
+import AdminDashboard from './components/AdminDashboard';
+import InternDashboard from './components/InternDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -16,13 +17,22 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route 
-                path="/dashboard" 
+                path="/admin-dashboard" 
                 element={
-                  <ProtectedRoute>
-                    <Dashboard />
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/intern-dashboard" 
+                element={
+                  <ProtectedRoute requiredRole="intern">
+                    <InternDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/dashboard" element={<Navigate to="/login" />} />
               <Route path="/" element={<Navigate to="/login" />} />
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
