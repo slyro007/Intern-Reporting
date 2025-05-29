@@ -49,9 +49,22 @@ class N8nApiClient {
   async getWorkflow(workflowId) {
     try {
       const response = await this.api.get(`/workflows/${workflowId}`);
-      return response.data.data;
+      console.log('Raw API response:', response.status);
+      console.log('Response data structure:', typeof response.data);
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      } else if (response.data) {
+        return response.data;
+      } else {
+        console.error('Unexpected response structure:', response);
+        return null;
+      }
     } catch (error) {
-      console.error(`Error fetching workflow ${workflowId}:`, error.message);
+      console.error(`Error fetching workflow ${workflowId}:`, error.response?.status, error.response?.statusText);
+      if (error.response?.data) {
+        console.error('Error response data:', error.response.data);
+      }
       throw error;
     }
   }
@@ -59,11 +72,31 @@ class N8nApiClient {
   // Create a new workflow
   async createWorkflow(workflowData) {
     try {
+      console.log('📤 Sending workflow data to API...');
+      console.log('Workflow keys:', Object.keys(workflowData));
+      
       const response = await this.api.post('/workflows', workflowData);
-      console.log(`✅ Created workflow: ${response.data.data.name}`);
-      return response.data.data;
+      console.log('✅ Workflow created successfully!');
+      console.log('Response status:', response.status);
+      
+      if (response.data && response.data.data) {
+        const workflow = response.data.data;
+        console.log(`📋 Created workflow: ${workflow.name} (ID: ${workflow.id})`);
+        return workflow;
+      } else if (response.data) {
+        console.log(`📋 Created workflow: ${response.data.name} (ID: ${response.data.id})`);
+        return response.data;
+      } else {
+        console.log('⚠️ Workflow created but response structure unexpected');
+        return response;
+      }
     } catch (error) {
-      console.error('Error creating workflow:', error.message);
+      console.error('❌ Error creating workflow:', error.response?.status, error.response?.statusText);
+      if (error.response?.data) {
+        console.error('Full error response:', JSON.stringify(error.response.data, null, 2));
+      } else {
+        console.error('Error details:', error.message);
+      }
       throw error;
     }
   }

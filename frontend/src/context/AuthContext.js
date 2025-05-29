@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -16,62 +16,83 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
+    // Check for existing authentication on mount
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_N8N_WEBHOOK_URL || 'http://localhost:5678'}/webhook/auth-login`,
-        { email, password }
-      );
+      const response = await axios.post('http://localhost:5678/webhook/auth-login', {
+        email,
+        password
+      }, {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (response.data.success) {
+      // Handle n8n "Workflow was started" response
+      if (response.data.includes && response.data.includes('Workflow was started')) {
+        // Wait a moment and try to get the actual result
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        throw new Error('Authentication service is processing your request. Please try again in a moment.');
+      }
+
+      // Handle actual response data
+      let authData;
+      if (typeof response.data === 'string') {
+        try {
+          authData = JSON.parse(response.data);
+        } catch {
+          // If it's not JSON, treat as error
+          throw new Error('Invalid response from authentication service');
+        }
+      } else {
+        authData = response.data;
+      }
+
+      if (authData.success && authData.user) {
         const userData = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          name: response.data.user.name,
-          role: response.data.user.role || 'user'
+          ...authData.user,
+          loginTime: authData.loginTime,
+          token: 'authenticated'
         };
         
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
-        return { success: true };
+        return { success: true, user: userData };
       } else {
-        return { success: false, error: response.data.error || 'Login failed' };
+        const errorMessage = authData.error || 'Invalid credentials';
+        throw new Error(errorMessage);
       }
+
     } catch (error) {
       console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Network error. Please try again.' 
-      };
-    }
-  };
-
-  const register = async (name, email, password) => {
-    try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_N8N_WEBHOOK_URL || 'http://localhost:5678'}/webhook/auth-register`,
-        { name, email, password }
-      );
-
-      if (response.data.success) {
-        return { success: true, message: 'Registration successful! Please log in.' };
-      } else {
-        return { success: false, error: response.data.error || 'Registration failed' };
+      
+      if (error.code === 'ECONNABORTED') {
+        throw new Error('Login request timed out. Please check your connection and try again.');
       }
-    } catch (error) {
-      console.error('Registration error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Network error. Please try again.' 
-      };
+      
+      if (error.response?.status === 404) {
+        throw new Error('Authentication service not available. Please contact support.');
+      }
+      
+      if (error.message.includes('Network Error')) {
+        throw new Error('Unable to connect to authentication service. Please check your connection.');
+      }
+
+      throw error;
     }
   };
 
@@ -80,12 +101,29 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  // Helper function to check if user has specific permission
+  const hasPermission = (permission) => {
+    return user?.permissions?.includes(permission) || false;
+  };
+
+  // Helper function to check if user is admin
+  const isAdmin = () => {
+    return user?.role === 'admin';
+  };
+
+  // Helper function to check if user is intern
+  const isIntern = () => {
+    return user?.role === 'intern';
+  };
+
   const value = {
     user,
     login,
-    register,
     logout,
-    loading
+    loading,
+    hasPermission,
+    isAdmin,
+    isIntern
   };
 
   return (

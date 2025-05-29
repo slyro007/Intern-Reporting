@@ -5,15 +5,6 @@ import { useAuth } from '../context/AuthContext';
 const Dashboard = () => {
   const { user, logout } = useAuth();
   
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    internName: user?.name || '',
-    projectDescription: '',
-    tasksCompleted: '',
-    timeSpent: '',
-    challenges: '',
-    notes: ''
-  });
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState({ summary: false, report: false });
   const [message, setMessage] = useState('');
@@ -32,157 +23,25 @@ const Dashboard = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Try to fetch logs from the n8n endpoint
-      // Since we don't have a get-logs endpoint yet, we'll use mock data
-      // but structure it to match what we'll get from n8n
+      // Try to fetch real data from n8n endpoints
+      // For now, we'll start with empty arrays since we haven't set up data storage yet
+      setLogs([]);
+      setReports([]);
+      setSummaries([]);
       
-      // For now, simulate API delay and use enhanced mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setLogs(generateMockLogs());
-      setReports(generateMockReports());
-      setSummaries(generateMockSummaries());
-      
-      setMessage('Dashboard data loaded successfully');
+      setMessage('Dashboard loaded. No data entries yet - submit your first log!');
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setMessage('Error loading dashboard data. Using offline data.');
+      setMessage('Error loading dashboard data. Please try again.');
       
-      // Fallback to mock data
-      setLogs(generateMockLogs());
-      setReports(generateMockReports());
-      setSummaries(generateMockSummaries());
+      // Set empty arrays as fallback
+      setLogs([]);
+      setReports([]);
+      setSummaries([]);
     } finally {
       setLoading(false);
     }
   };
-
-  // Generate more realistic mock data
-  const generateMockLogs = () => {
-    const logs = [];
-    const startDate = new Date('2025-05-20');
-    
-    for (let i = 0; i < 10; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      
-      logs.push({
-        id: i + 1,
-        date: date.toISOString().split('T')[0],
-        internName: 'Srujan Jalagam',
-        projectDescription: getRandomProject(),
-        tasksCompleted: getRandomTasks(),
-        timeSpent: (Math.random() * 3 + 6).toFixed(1), // 6-9 hours
-        challenges: getRandomChallenges(),
-        notes: getRandomNotes(),
-        timestamp: new Date(date.setHours(Math.random() * 8 + 9)).toISOString() // 9AM-5PM
-      });
-    }
-    
-    return logs.reverse(); // Most recent first
-  };
-
-  const getRandomProject = () => {
-    const projects = [
-      'Computer setups using immy.bot',
-      'Network infrastructure maintenance',
-      'Client support tickets',
-      'Server maintenance and updates',
-      'Office 365 migration assistance',
-      'Security audit and compliance',
-      'Backup system monitoring',
-      'Hardware inventory management'
-    ];
-    return projects[Math.floor(Math.random() * projects.length)];
-  };
-
-  const getRandomTasks = () => {
-    const tasks = [
-      'Configured 8 new workstations for client onboarding, deployed standardized software packages',
-      'Updated switch configurations, documented network topology, performed cable management',
-      'Resolved 12 helpdesk tickets, performed remote troubleshooting, updated documentation',
-      'Installed Windows updates on 25 servers, verified system stability',
-      'Migrated 15 user mailboxes to Office 365, tested email flow',
-      'Conducted security scan on client infrastructure, documented findings',
-      'Verified backup completion for 5 clients, tested restore procedures',
-      'Updated hardware inventory database, tagged new equipment'
-    ];
-    return tasks[Math.floor(Math.random() * tasks.length)];
-  };
-
-  const getRandomChallenges = () => {
-    const challenges = [
-      'Encountered driver compatibility issues with older hardware',
-      'Complex VLAN configuration required multiple attempts',
-      'One ticket required escalation due to complex Exchange issue',
-      'Network connectivity issues during server updates',
-      'Email migration had DNS propagation delays',
-      'Legacy system compatibility issues during security scan',
-      'Backup verification failed for one client, required troubleshooting',
-      'Inventory system had database connectivity issues'
-    ];
-    return challenges[Math.floor(Math.random() * challenges.length)];
-  };
-
-  const getRandomNotes = () => {
-    const notes = [
-      'Learned about Group Policy management and automated deployment',
-      'Gained deeper understanding of enterprise networking concepts',
-      'Improved customer communication skills and technical problem-solving',
-      'Learned server patching best practices and rollback procedures',
-      'Gained experience with Office 365 admin center and PowerShell',
-      'Understood security frameworks and compliance requirements',
-      'Learned backup strategies and disaster recovery planning',
-      'Improved asset management and documentation skills'
-    ];
-    return notes[Math.floor(Math.random() * notes.length)];
-  };
-
-  const generateMockReports = () => [
-    {
-      id: 1,
-      title: 'Weekly Report - Week 1',
-      date: '2025-05-25',
-      type: 'weekly',
-      summary: 'Strong performance in computer setup tasks. Showed excellent problem-solving skills with hardware compatibility issues. Demonstrates good learning curve with enterprise tools.',
-      hoursWorked: 40,
-      tasksCompleted: 25,
-      fileName: 'weekly-report-2025-05-25.pdf'
-    },
-    {
-      id: 2,
-      title: 'Mid-Point Assessment',
-      date: '2025-05-28',
-      type: 'assessment',
-      summary: 'Intern shows strong technical aptitude and professional growth. Excels in client communication and problem resolution.',
-      hoursWorked: 78,
-      tasksCompleted: 52,
-      fileName: 'midpoint-assessment-2025-05-28.pdf'
-    }
-  ];
-
-  const generateMockSummaries = () => [
-    {
-      id: 1,
-      week: 'Week of May 20-24, 2025',
-      totalHours: 38.5,
-      totalTasks: 42,
-      mainProjects: ['Computer Setups', 'Network Maintenance', 'Support Tickets'],
-      keyLearnings: ['Group Policy', 'VLAN Configuration', 'Customer Service', 'immy.bot automation'],
-      avgDailyHours: 7.7,
-      productivity: 'High'
-    },
-    {
-      id: 2,
-      week: 'Week of May 27-31, 2025',
-      totalHours: 41.0,
-      totalTasks: 38,
-      mainProjects: ['Server Maintenance', 'Office 365 Migration', 'Security Audit'],
-      keyLearnings: ['PowerShell', 'Office 365', 'Security Compliance', 'Backup Systems'],
-      avgDailyHours: 8.2,
-      productivity: 'Very High'
-    }
-  ];
 
   const filteredLogs = logs.filter(log => {
     const matchesDate = dateFilter ? log.date.includes(dateFilter) : true;
@@ -190,66 +49,19 @@ const Dashboard = () => {
     return matchesDate && matchesIntern;
   });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
-
-    try {
-      const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/intern-logs';
-      
-      const response = await axios.post(webhookUrl, {
-        ...formData,
-        userId: user?.id,
-        userEmail: user?.email,
-        timestamp: new Date().toISOString(),
-        week: getWeekNumber(new Date(formData.date))
-      });
-
-      setMessage('Log entry submitted successfully!');
-      
-      // Refresh the dashboard data to include the new entry
-      setTimeout(() => {
-        fetchAllData();
-      }, 1000);
-      
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        internName: user?.name || '',
-        projectDescription: '',
-        tasksCompleted: '',
-        timeSpent: '',
-        challenges: '',
-        notes: ''
-      });
-    } catch (error) {
-      setMessage('Error submitting log entry. Please try again.');
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const generateWeeklySummary = async () => {
     setAiLoading({ ...aiLoading, summary: true });
     try {
-      // This will call your n8n workflow for weekly summary generation
-      const response = await axios.post('http://localhost:5678/webhook/generate-weekly-summary', {
+      // Call n8n workflow for weekly summary generation
+      await axios.post('http://localhost:5678/webhook/generate-weekly-summary', {
         startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
         internEmail: user?.email
       });
       
-      setMessage(`Weekly summary generated successfully!`);
+      setMessage('Weekly summary generation initiated successfully!');
       
-      // Refresh summaries
+      // Refresh data after generation
       setTimeout(() => {
         fetchAllData();
       }, 2000);
@@ -264,15 +76,15 @@ const Dashboard = () => {
   const generateFinalReport = async (reportPeriod = 'full') => {
     setAiLoading({ ...aiLoading, report: true });
     try {
-      const response = await axios.post('http://localhost:5678/webhook/generate-final-report', {
+      await axios.post('http://localhost:5678/webhook/generate-final-report', {
         userEmail: user?.email,
         reportPeriod: reportPeriod,
         requestedBy: user?.name
       });
       
-      setMessage(`Final report generation initiated successfully!`);
+      setMessage('Final report generation initiated successfully!');
       
-      // Refresh reports
+      // Refresh data after generation
       setTimeout(() => {
         fetchAllData();
       }, 3000);
@@ -282,12 +94,6 @@ const Dashboard = () => {
     } finally {
       setAiLoading({ ...aiLoading, report: false });
     }
-  };
-
-  const getWeekNumber = (date) => {
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
   };
 
   const handleLogout = () => {
@@ -430,8 +236,14 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Intern Reports Dashboard</h1>
             <p className="text-gray-600">Track progress, view logs, and analyze performance data</p>
+            <p className="text-sm text-blue-600 mt-1">Welcome, {user?.name || 'User'}</p>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            <div className="text-right mr-4">
+              <p className="text-sm font-medium text-gray-700">{user?.name}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-blue-600 capitalize">{user?.role}</p>
+            </div>
             <button
               onClick={generateWeeklySummary}
               disabled={aiLoading.summary}
@@ -445,6 +257,15 @@ const Dashboard = () => {
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               {aiLoading.report ? 'Generating...' : '📋 Generate Final Report'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200 flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Logout
             </button>
           </div>
         </div>
@@ -468,7 +289,7 @@ const Dashboard = () => {
         />
         <StatsCard 
           title="Total Hours" 
-          value={logs.reduce((sum, log) => sum + parseFloat(log.timeSpent), 0).toFixed(1)} 
+          value={logs.reduce((sum, log) => sum + parseFloat(log.timeSpent || 0), 0).toFixed(1)} 
           subtitle="Hours worked"
           color="green"
         />
@@ -480,7 +301,7 @@ const Dashboard = () => {
         />
         <StatsCard 
           title="Average Daily Hours" 
-          value={(logs.reduce((sum, log) => sum + parseFloat(log.timeSpent), 0) / logs.length || 0).toFixed(1)} 
+          value={logs.length > 0 ? (logs.reduce((sum, log) => sum + parseFloat(log.timeSpent || 0), 0) / logs.length).toFixed(1) : '0.0'} 
           subtitle="Per day productivity"
           color="orange"
         />
@@ -533,8 +354,17 @@ const Dashboard = () => {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-6">Daily Logs</h2>
             {filteredLogs.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No logs found matching your filters.</p>
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No logs yet</h3>
+                <p className="text-gray-500 mb-6">Start tracking your daily work progress by submitting your first log entry.</p>
+                <p className="text-sm text-blue-600">
+                  💡 Tip: Log entries will be stored and processed by your n8n workflows for weekly summaries and reports.
+                </p>
               </div>
             ) : (
               <div className="grid gap-6">
@@ -550,13 +380,20 @@ const Dashboard = () => {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-6">Generated Reports</h2>
             {reports.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No reports generated yet.</p>
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No reports generated yet</h3>
+                <p className="text-gray-500 mb-6">Generate comprehensive reports based on your daily logs and activities.</p>
                 <button
                   onClick={() => generateFinalReport()}
-                  className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                  disabled={aiLoading.report}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
-                  Generate Your First Report
+                  {aiLoading.report ? 'Generating...' : '📋 Generate Your First Report'}
                 </button>
               </div>
             ) : (
@@ -598,13 +435,20 @@ const Dashboard = () => {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-6">Weekly Summaries</h2>
             {summaries.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No summaries available yet.</p>
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No summaries available yet</h3>
+                <p className="text-gray-500 mb-6">AI-powered weekly summaries will analyze your daily logs and highlight key accomplishments.</p>
                 <button
                   onClick={generateWeeklySummary}
-                  className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+                  disabled={aiLoading.summary}
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
                 >
-                  Generate Weekly Summary
+                  {aiLoading.summary ? 'Generating...' : '📊 Generate Weekly Summary'}
                 </button>
               </div>
             ) : (

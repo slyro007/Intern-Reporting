@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -7,9 +7,8 @@ const Login = () => {
     email: '',
     password: ''
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,64 +17,86 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setLoading(true);
 
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
+    try {
+      await login(formData.email, formData.password);
       navigate('/dashboard');
-    } else {
-      setError(result.error);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-          {/* Header with Logo */}
-          <div className="text-center mb-8">
+        {/* Logo and Header */}
+        <div className="text-center">
+          <div className="mx-auto mb-6">
             <img 
-              src="/logo.png" 
+              src="/wolff-logics-logo.png" 
               alt="Wolff Logics Logo" 
-              className="h-16 w-auto mx-auto mb-4 bg-white rounded-lg p-2 shadow-md"
+              className="h-20 w-auto mx-auto"
+              onError={(e) => {
+                // Fallback to icon if image fails to load
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
             />
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to your Wolff Logics account</p>
-          </div>
-
-          {error && (
-            <div className="mb-6 p-4 rounded-lg border-l-4 bg-red-50 text-red-700 border-red-400">
-              <div className="flex items-center">
-                <svg className="h-5 w-5 text-red-400 mr-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <p className="text-sm font-medium">{error}</p>
-              </div>
+            <div className="hidden h-20 w-20 bg-white rounded-full flex items-center justify-center">
+              <svg className="h-12 w-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-          )}
+          </div>
+          <h2 className="text-3xl font-extrabold text-white">
+            Wolff Logics
+          </h2>
+          <p className="mt-2 text-lg text-blue-100">
+            Intern Tracking System
+          </p>
+          <p className="mt-1 text-sm text-blue-200">
+            Sign in to your account
+          </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Login Form */}
+        <div className="bg-white rounded-xl shadow-2xl p-8">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex">
+                  <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <p className="ml-3 text-sm text-red-700">{error}</p>
+                </div>
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <input
-                type="email"
                 id="email"
                 name="email"
+                type="email"
+                required
                 value={formData.email}
                 onChange={handleChange}
-                required
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm"
+                disabled={loading}
               />
             </div>
 
@@ -84,59 +105,40 @@ const Login = () => {
                 Password
               </label>
               <input
-                type="password"
                 id="password"
                 name="password"
+                type="password"
+                required
                 value={formData.password}
                 onChange={handleChange}
-                required
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 shadow-sm"
+                disabled={loading}
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-105 active:scale-95 shadow-lg font-semibold"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing In...
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Signing in...
                 </div>
               ) : (
-                <div className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Sign In
-                </div>
+                'Sign In'
               )}
             </button>
           </form>
+        </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link 
-                to="/register" 
-                className="text-blue-600 hover:text-blue-800 font-medium transition duration-200"
-              >
-                Create one here
-              </Link>
-            </p>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p className="text-xs text-gray-500">
-              Wolff Logics MSP - Secure Access Portal
-            </p>
-          </div>
+        {/* Footer */}
+        <div className="text-center">
+          <p className="text-sm text-blue-200">
+            © 2025 Wolff Logics. All rights reserved.
+          </p>
         </div>
       </div>
     </div>

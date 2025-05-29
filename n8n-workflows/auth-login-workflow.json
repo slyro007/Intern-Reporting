@@ -3,101 +3,53 @@
   "nodes": [
     {
       "parameters": {
+        "httpMethod": "POST",
         "path": "auth-login",
         "options": {}
       },
-      "id": "webhook-login",
+      "id": "webhook",
       "name": "Login Webhook",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [340, 240],
+      "typeVersion": 2,
+      "position": [240, 300],
       "webhookId": "auth-login"
     },
     {
       "parameters": {
-        "conditions": {
-          "string": [
+        "functionCode": "// Extract login data from webhook\nconst inputData = $input.first().json;\nconst { email, password } = inputData;\n\n// Validate required fields\nif (!email || !password) {\n  return [{\n    json: {\n      success: false,\n      error: 'Email and password are required'\n    }\n  }];\n}\n\n// Mock user database - Add your test users here\nconst mockUsers = [\n  {\n    id: 'user_001',\n    name: 'Srujan Jalagam',\n    email: 'srujan@wolfflogics.com',\n    password: 'password123',\n    role: 'intern'\n  },\n  {\n    id: 'user_002', \n    name: 'Admin User',\n    email: 'admin@wolfflogics.com',\n    password: 'admin123',\n    role: 'admin'\n  },\n  {\n    id: 'user_003',\n    name: 'Demo Intern', \n    email: 'demo@wolfflogics.com',\n    password: 'demo123',\n    role: 'intern'\n  }\n];\n\n// Find user by email\nconst user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());\n\nif (!user || user.password !== password) {\n  return [{\n    json: {\n      success: false,\n      error: 'Invalid email or password'\n    }\n  }];\n}\n\nconsole.log('User logged in:', user.email);\n\nreturn [{\n  json: {\n    success: true,\n    message: 'Login successful',\n    user: {\n      id: user.id,\n      name: user.name,\n      email: user.email,\n      role: user.role\n    }\n  }\n}];"
+      },
+      "id": "function",
+      "name": "Validate Login",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "responseHeaders": {
+          "entries": [
             {
-              "value1": "={{ $json.email }}",
-              "operation": "isNotEmpty"
+              "name": "Access-Control-Allow-Origin",
+              "value": "*"
             },
             {
-              "value1": "={{ $json.password }}",
-              "operation": "isNotEmpty"
+              "name": "Access-Control-Allow-Methods", 
+              "value": "POST, OPTIONS"
+            },
+            {
+              "name": "Access-Control-Allow-Headers",
+              "value": "Content-Type, Authorization"
             }
           ]
         }
       },
-      "id": "validate-input",
-      "name": "Validate Input",
-      "type": "n8n-nodes-base.if",
+      "id": "response",
+      "name": "Login Response",
+      "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [560, 240]
-    },
-    {
-      "parameters": {
-        "fileName": "/data/users.json",
-        "options": {}
-      },
-      "id": "read-users",
-      "name": "Read Users File",
-      "type": "n8n-nodes-base.readFile",
-      "typeVersion": 1,
-      "position": [780, 160],
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "keepOnlySet": false,
-        "values": {
-          "string": [
-            {
-              "name": "users",
-              "value": "={{ $json.data ? JSON.parse($json.data) : [] }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "parse-users",
-      "name": "Parse Users",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
-      "position": [1000, 160]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Authenticate user\nconst users = $input.first().json.users || [];\nconst loginData = $node[\"Login Webhook\"].json;\n\n// Hash the provided password\nconst hashedPassword = require('crypto').createHash('sha256').update(loginData.password).digest('hex');\n\n// Find user with matching email and password\nconst user = users.find(u => \n  u.email === loginData.email && \n  u.password === hashedPassword && \n  u.active === true\n);\n\nif (user) {\n  // Create safe user object (without password)\n  const safeUser = {\n    id: user.id,\n    name: user.name,\n    email: user.email,\n    role: user.role,\n    createdAt: user.createdAt\n  };\n  \n  return [{\n    json: {\n      success: true,\n      user: safeUser,\n      message: \"Login successful\"\n    }\n  }];\n} else {\n  return [{\n    json: {\n      success: false,\n      error: \"Invalid email or password\"\n    }\n  }];\n}"
-      },
-      "id": "authenticate-user",
-      "name": "Authenticate User",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [1220, 160]
-    },
-    {
-      "parameters": {
-        "values": {
-          "boolean": [
-            {
-              "name": "success",
-              "value": false
-            }
-          ],
-          "string": [
-            {
-              "name": "error",
-              "value": "Invalid input. Email and password are required."
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "error-response",
-      "name": "Error Response",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
-      "position": [780, 320]
+      "position": [680, 300]
     }
   ],
   "connections": {
@@ -105,48 +57,19 @@
       "main": [
         [
           {
-            "node": "Validate Input",
+            "node": "Validate Login",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Validate Input": {
+    "Validate Login": {
       "main": [
         [
           {
-            "node": "Read Users File",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Error Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Users File": {
-      "main": [
-        [
-          {
-            "node": "Parse Users",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Users": {
-      "main": [
-        [
-          {
-            "node": "Authenticate User",
-            "type": "main",
+            "node": "Login Response",
+            "type": "main", 
             "index": 0
           }
         ]
@@ -155,5 +78,5 @@
   },
   "active": true,
   "settings": {},
-  "versionId": "1"
+  "staticData": null
 } 
