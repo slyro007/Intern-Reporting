@@ -1,0 +1,266 @@
+{
+  "name": "Final Report Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-final-report",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [280, 300],
+      "webhookId": "generate-final-report"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get user email from webhook body\nconst userEmail = $json.userEmail || $json.body?.userEmail;\nconst reportPeriod = $json.reportPeriod || $json.body?.reportPeriod || 'full'; // 'month', 'quarter', 'full'\n\nif (!userEmail) {\n  throw new Error('User email is required');\n}\n\nreturn [{\n  json: {\n    userEmail: userEmail,\n    reportPeriod: reportPeriod,\n    requestDate: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "validate-request",
+      "name": "Validate Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "fieldsToEdit": {
+          "values": [
+            {
+              "fieldName": "mockLogsData",
+              "fieldValue": "true"
+            },
+            {
+              "fieldName": "logsNote",
+              "fieldValue": "In production, this would read from /data/logs/"
+            }
+          ]
+        }
+      },
+      "id": "prepare-logs",
+      "name": "Prepare Logs Data",
+      "type": "n8n-nodes-base.editFields",
+      "typeVersion": 1,
+      "position": [720, 240]
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "fieldsToEdit": {
+          "values": [
+            {
+              "fieldName": "mockSummariesData",
+              "fieldValue": "true"
+            },
+            {
+              "fieldName": "summariesNote",
+              "fieldValue": "In production, this would read from /data/summaries/"
+            }
+          ]
+        }
+      },
+      "id": "prepare-summaries",
+      "name": "Prepare Summaries Data",
+      "type": "n8n-nodes-base.editFields",
+      "typeVersion": 1,
+      "position": [720, 360]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process logs and summaries for the specific user (using mock data)\nconst userEmail = $('Validate Request').first().json.userEmail;\nconst reportPeriod = $('Validate Request').first().json.reportPeriod;\n\n// Mock comprehensive user data for demonstration\nconst mockUserLogs = [\n  {\n    date: '2024-01-10',\n    userEmail: 'srujan@wolfflogics.com',\n    userName: 'Srujan Jalagam',\n    hoursWorked: '8',\n    workDescription: 'Initial immy.bot setup and configuration',\n    tasksCompleted: 'Configured 3 client environments, set up automation rules',\n    challengesFaced: 'Learning curve with immy.bot interface',\n    additionalNotes: 'Made good progress on understanding the platform'\n  },\n  {\n    date: '2024-01-15',\n    userEmail: 'srujan@wolfflogics.com',\n    userName: 'Srujan Jalagam',\n    hoursWorked: '7.5',\n    workDescription: 'Computer deployment project',\n    tasksCompleted: 'Deployed 5 workstations, configured domain policies',\n    challengesFaced: 'Network connectivity issues with legacy hardware',\n    additionalNotes: 'Documented solutions for future reference'\n  },\n  {\n    date: '2024-01-20',\n    userEmail: 'srujan@wolfflogics.com',\n    userName: 'Srujan Jalagam',\n    hoursWorked: '8',\n    workDescription: 'Client training and software rollout',\n    tasksCompleted: 'Trained 10 users, deployed Office 365',\n    challengesFaced: 'User resistance to new software',\n    additionalNotes: 'Created training materials for future use'\n  }\n];\n\n// Filter for the requested user\nconst userLogs = mockUserLogs.filter(log => log.userEmail === userEmail);\n\n// Calculate date range based on report period\nlet startDate = new Date('2000-01-01'); // Default to beginning\nconst endDate = new Date();\n\nif (reportPeriod === 'month') {\n  startDate = new Date();\n  startDate.setMonth(startDate.getMonth() - 1);\n} else if (reportPeriod === 'quarter') {\n  startDate = new Date();\n  startDate.setMonth(startDate.getMonth() - 3);\n}\n\n// Filter logs by date range\nconst filteredLogs = userLogs.filter(log => {\n  const logDate = new Date(log.date);\n  return logDate >= startDate && logDate <= endDate;\n});\n\n// Mock summaries data\nconst mockSummaries = [\n  {\n    fileName: 'weekly-summary-2024-01-15.md',\n    content: '# Weekly Summary Jan 8-15\\n\\nSrujan made excellent progress this week on immy.bot configuration...'\n  },\n  {\n    fileName: 'weekly-summary-2024-01-22.md',\n    content: '# Weekly Summary Jan 15-22\\n\\nContinued strong performance with client deployments...'\n  }\n];\n\n// Calculate statistics\nconst totalHours = filteredLogs.reduce((sum, log) => sum + parseFloat(log.hoursWorked || 0), 0);\nconst totalDays = new Set(filteredLogs.map(log => log.date)).size;\nconst avgHoursPerDay = totalDays > 0 ? (totalHours / totalDays).toFixed(1) : 0;\n\n// Group logs by month for trend analysis\nconst monthlyData = {};\nfilteredLogs.forEach(log => {\n  const month = log.date.substring(0, 7); // YYYY-MM\n  if (!monthlyData[month]) {\n    monthlyData[month] = { hours: 0, days: 0, logs: [] };\n  }\n  monthlyData[month].hours += parseFloat(log.hoursWorked || 0);\n  monthlyData[month].days += 1;\n  monthlyData[month].logs.push(log);\n});\n\n// Extract key themes and skills\nconst allDescriptions = filteredLogs.map(log => log.workDescription).join(' ');\nconst allTasks = filteredLogs.map(log => log.tasksCompleted).join(' ');\nconst allChallenges = filteredLogs.map(log => log.challengesFaced).join(' ');\n\nreturn [{\n  json: {\n    userEmail: userEmail,\n    userName: filteredLogs[0]?.userName || 'Unknown User',\n    reportPeriod: reportPeriod,\n    dateRange: {\n      start: startDate.toISOString().split('T')[0],\n      end: endDate.toISOString().split('T')[0]\n    },\n    statistics: {\n      totalHours: totalHours,\n      totalDays: totalDays,\n      avgHoursPerDay: avgHoursPerDay,\n      totalLogs: filteredLogs.length\n    },\n    monthlyTrends: monthlyData,\n    recentLogs: filteredLogs.slice(-10), // Last 10 logs\n    summaries: mockSummaries,\n    keyContent: {\n      descriptions: allDescriptions,\n      tasks: allTasks,\n      challenges: allChallenges\n    },\n    dataType: 'mock',\n    note: 'Using mock data - replace with actual file reading in production'\n  }\n}];"
+      },
+      "id": "process-user-data",
+      "name": "Process User Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an AI assistant creating comprehensive final performance reports for MSP interns at Wolff Logics. Generate professional, detailed reports suitable for management review and intern development feedback."
+            },
+            {
+              "role": "user",
+              "content": "=Create a comprehensive final performance report for {{ $json.userName }} ({{ $json.userEmail }}) covering the period from {{ $json.dateRange.start }} to {{ $json.dateRange.end }}.\n\n**PERFORMANCE STATISTICS:**\n- Total Hours Worked: {{ $json.statistics.totalHours }}\n- Total Active Days: {{ $json.statistics.totalDays }}\n- Average Hours per Day: {{ $json.statistics.avgHoursPerDay }}\n- Total Log Entries: {{ $json.statistics.totalLogs }}\n\n**MONTHLY TRENDS:**\n{{ Object.keys($json.monthlyTrends).map(month => \n  `${month}: ${$json.monthlyTrends[month].hours} hours over ${$json.monthlyTrends[month].days} days`\n).join('\\n') }}\n\n**RECENT WORK ACTIVITIES:**\n{{ $json.recentLogs.map(log => \n  `${log.date} (${log.hoursWorked}h):\\n- Work: ${log.workDescription}\\n- Tasks: ${log.tasksCompleted}\\n- Challenges: ${log.challengesFaced}\\n- Notes: ${log.additionalNotes}`\n).join('\\n\\n') }}\n\n**PREVIOUS WEEKLY SUMMARIES:**\n{{ $json.summaries.map(summary => \n  `### ${summary.fileName}\\n${summary.content}`\n).join('\\n\\n') }}\n\nPlease create a professional final report with the following structure:\n\n1. **Executive Summary**\n2. **Performance Overview** (statistics and trends)\n3. **Key Accomplishments** (major projects and achievements)\n4. **Technical Skills Development** (what they learned)\n5. **Professional Growth** (soft skills, work habits)\n6. **Challenges Overcome**\n7. **Areas for Continued Development**\n8. **Manager Recommendations**\n9. **Overall Assessment** (rating and final thoughts)\n\nFormat using markdown with proper headers, bullet points, and professional language suitable for HR and management review."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "generate-ai-report",
+      "name": "Generate AI Report",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1160, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $json.choices[0].message.content;\nconst userData = $('Process User Data').first().json;\nconst reportDate = new Date().toISOString().split('T')[0];\nconst fileName = `final-report-${userData.userName.replace(/\\s+/g, '-').toLowerCase()}-${reportDate}.md`;\n\n// Add header information to the report\nconst reportHeader = `# Final Intern Performance Report\\n\\n**Intern:** ${userData.userName}\\n**Email:** ${userData.userEmail}\\n**Report Period:** ${userData.dateRange.start} to ${userData.dateRange.end}\\n**Generated:** ${reportDate}\\n**Report Type:** ${userData.reportPeriod} Assessment\\n\\n---\\n\\n`;\n\nconst fullReport = reportHeader + aiResponse;\n\nreturn [{\n  json: {\n    fileName: fileName,\n    content: fullReport,\n    reportDate: reportDate,\n    userEmail: userData.userEmail,\n    userName: userData.userName,\n    statistics: userData.statistics,\n    savedTo: '/data/reports/',\n    fullPath: `/data/reports/${fileName}`\n  }\n}];"
+      },
+      "id": "format-report",
+      "name": "Format Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 300]
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "fieldsToEdit": {
+          "values": [
+            {
+              "fieldName": "status",
+              "fieldValue": "generated"
+            },
+            {
+              "fieldName": "message",
+              "fieldValue": "Final report generated successfully"
+            },
+            {
+              "fieldName": "generatedAt",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldName": "fileNote",
+              "fieldValue": "In production, this would save to /data/reports/"
+            }
+          ]
+        }
+      },
+      "id": "mark-completed",
+      "name": "Mark as Completed",
+      "type": "n8n-nodes-base.editFields",
+      "typeVersion": 1,
+      "position": [1600, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Final report generated successfully\",\n  \"fileName\": \"{{ $json.fileName }}\",\n  \"reportDate\": \"{{ $json.reportDate }}\",\n  \"userName\": \"{{ $json.userName }}\",\n  \"statistics\": {{ JSON.stringify($json.statistics) }},\n  \"content\": \"{{ $json.content }}\"\n}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1820, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Request": {
+      "main": [
+        [
+          {
+            "node": "Prepare Logs Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Summaries Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Logs Data": {
+      "main": [
+        [
+          {
+            "node": "Process User Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Summaries Data": {
+      "main": [
+        [
+          {
+            "node": "Process User Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Process User Data": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Report": {
+      "main": [
+        [
+          {
+            "node": "Format Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Report": {
+      "main": [
+        [
+          {
+            "node": "Mark as Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Completed": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "timezone": "America/Chicago"
+  },
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "2"
+} 

@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+[
+  {
+    "type": "general",
+    "instruction": "I'm building a self-hosted tracking system for an intern at our MSP (Wolff Logics). The intern mostly works on computer setups using immy.bot, and I want to log daily/weekly updates, generate weekly AI summaries, and produce a final report."
+  },
+  {
+    "type": "code",
+    "instruction": "When helping with backend automation, assume I’m using n8n self-hosted and prefer low-code or JSON-based node flows when possible."
+  },
+  {
+    "type": "code",
+    "instruction": "For data storage, assume a lightweight JSON file or SQLite database unless otherwise specified. Help me keep it simple and portable."
+  },
+  {
+    "type": "code",
+    "instruction": "When suggesting OpenAI prompts, aim for summarizing progress logs into weekly summaries and polished final reports. Assume the AI will be used in n8n’s OpenAI node."
+  },
+  {
+    "type": "ui",
+    "instruction": "If we’re building a frontend, I prefer minimal HTML or a Flask-based form that can POST to a local webhook. Keep it clean and functional."
+  },
+  {
+    "type": "dev",
+    "instruction": "Help me structure this project so I can easily add Teams integration later, but don’t require it for v1."
+  },
+  {
+    "type": "reminder",
+    "instruction": "Remind me to keep logs organized by week so I can generate clean summaries later."
+  }
+  
+]
+
+

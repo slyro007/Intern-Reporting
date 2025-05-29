@@ -1,0 +1,44 @@
+{
+  "name": "Simple Test Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "intern-logs",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "intern-logs"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "SUCCESS: Webhook received data"
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 

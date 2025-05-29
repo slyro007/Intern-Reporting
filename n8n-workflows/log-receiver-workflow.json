@@ -1,0 +1,117 @@
+{
+  "name": "Intern Log Receiver",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "intern-logs",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [340, 240],
+      "webhookId": "intern-logs"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "filename",
+              "value": "={{ $json.date }}_{{ $json.internName.replace(' ', '_') }}.json"
+            },
+            {
+              "name": "filepath", 
+              "value": "=/data/logs/{{ $json.date }}_{{ $json.internName.replace(' ', '_') }}.json"
+            },
+            {
+              "name": "logId",
+              "value": "={{ $json.date }}_{{ $json.timestamp.split('T')[1].split('.')[0].replace(/:/g, '') }}"
+            },
+            {
+              "name": "savedAt",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "status",
+              "value": "saved"
+            },
+            {
+              "name": "message",
+              "value": "Log entry processed successfully"
+            },
+            {
+              "name": "processedAt",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "add-metadata",
+      "name": "Add Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [560, 240]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "message",
+              "value": "Log entry saved successfully"
+            },
+            {
+              "name": "filename",
+              "value": "={{ $json.filename }}"
+            },
+            {
+              "name": "logId",
+              "value": "={{ $json.logId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [780, 240]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Add Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Metadata": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "3"
+} 

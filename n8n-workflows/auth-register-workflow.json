@@ -1,0 +1,251 @@
+{
+  "name": "User Registration",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "auth-register",
+        "options": {}
+      },
+      "id": "webhook-register",
+      "name": "Register Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [340, 240],
+      "webhookId": "auth-register"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.name }}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{ $json.email }}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{ $json.password }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [560, 240]
+    },
+    {
+      "parameters": {
+        "fileName": "/data/users.json",
+        "options": {}
+      },
+      "id": "read-users",
+      "name": "Read Users File",
+      "type": "n8n-nodes-base.readFile",
+      "typeVersion": 1,
+      "position": [780, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "users",
+              "value": "={{ $json.data ? JSON.parse($json.data) : [] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-users",
+      "name": "Parse Users",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if user already exists\nconst users = $input.first().json.users || [];\nconst newUser = $node[\"Register Webhook\"].json;\n\nconst existingUser = users.find(user => user.email === newUser.email);\n\nif (existingUser) {\n  return [{\n    json: {\n      success: false,\n      error: \"User with this email already exists\"\n    }\n  }];\n}\n\n// Create new user\nconst userId = Date.now().toString();\nconst hashedPassword = require('crypto').createHash('sha256').update(newUser.password).digest('hex');\n\nconst user = {\n  id: userId,\n  name: newUser.name,\n  email: newUser.email,\n  password: hashedPassword,\n  role: 'user',\n  createdAt: new Date().toISOString(),\n  active: true\n};\n\nusers.push(user);\n\nreturn [{\n  json: {\n    users: users,\n    newUser: user,\n    success: true\n  }\n}];"
+      },
+      "id": "process-registration",
+      "name": "Process Registration",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1220, 160]
+    },
+    {
+      "parameters": {
+        "fileName": "/data/users.json",
+        "fileContent": "={{ JSON.stringify($json.users, null, 2) }}",
+        "options": {}
+      },
+      "id": "save-users",
+      "name": "Save Users",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [1440, 160]
+    },
+    {
+      "parameters": {
+        "url": "https://api.emailjs.com/api/v1.0/email/send",
+        "options": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"service_id\": \"{{ $env.EMAILJS_SERVICE_ID }}\",\n  \"template_id\": \"{{ $env.EMAILJS_TEMPLATE_ID }}\",\n  \"user_id\": \"{{ $env.EMAILJS_USER_ID }}\",\n  \"template_params\": {\n    \"to_name\": \"{{ $json.newUser.name }}\",\n    \"to_email\": \"{{ $json.newUser.email }}\",\n    \"subject\": \"Welcome to Wolff Logics Team Portal\",\n    \"message\": \"Welcome to the Wolff Logics team progress tracking system! You can now log in and start submitting your daily reports.\"\n  }\n}"
+      },
+      "id": "send-welcome-email",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1660, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "values": {
+          "boolean": [
+            {
+              "name": "success",
+              "value": true
+            }
+          ],
+          "string": [
+            {
+              "name": "message",
+              "value": "Registration successful! Welcome email sent."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1880, 160]
+    },
+    {
+      "parameters": {
+        "values": {
+          "boolean": [
+            {
+              "name": "success",
+              "value": false
+            }
+          ],
+          "string": [
+            {
+              "name": "error",
+              "value": "Invalid input. Name, email, and password are required."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [780, 320]
+    }
+  ],
+  "connections": {
+    "Register Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Read Users File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Users File": {
+      "main": [
+        [
+          {
+            "node": "Parse Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Users": {
+      "main": [
+        [
+          {
+            "node": "Process Registration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Registration": {
+      "main": [
+        [
+          {
+            "node": "Save Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Users": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 
