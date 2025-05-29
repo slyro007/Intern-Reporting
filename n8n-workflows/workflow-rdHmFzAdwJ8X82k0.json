@@ -1,0 +1,229 @@
+{
+  "createdAt": "2025-05-29T21:21:08.274Z",
+  "updatedAt": "2025-05-29T22:09:43.000Z",
+  "id": "rdHmFzAdwJ8X82k0",
+  "name": "Daily Logs Working NEW",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "daily-logs-new",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7b6d32cf-0fab-4217-90e7-4994b2c8f216",
+      "name": "Webhook",
+      "webhookId": "a54a65c7-9e98-4e7c-91f3-4f6914c0296b"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "daily_logs",
+          "mode": "list",
+          "cachedResultName": "daily_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "intern_email": "={{ $('Webhook').item.json.body.internEmail }}",
+            "intern_name": "={{ $('Webhook').item.json.body.internName }}",
+            "project_description": "={{ $('Webhook').item.json.body.projectDescription }}",
+            "tasks_completed": "={{ $('Webhook').item.json.body.tasksCompleted }}",
+            "time_spent": "={{ $('Webhook').item.json.body.timeSpent }}",
+            "challenges": "={{ $('Webhook').item.json.body.challenges }}",
+            "updated_at": "={{ $now }}",
+            "created_at": "={{ $now }}",
+            "notes": "={{ $('Webhook').item.json.body.notes }}",
+            "log_date": "={{ $('Webhook').item.json.body.date }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "intern_email",
+              "displayName": "intern_email",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intern_name",
+              "displayName": "intern_name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "log_date",
+              "displayName": "log_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "project_description",
+              "displayName": "project_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tasks_completed",
+              "displayName": "tasks_completed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "time_spent",
+              "displayName": "time_spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "challenges",
+              "displayName": "challenges",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "4106b67e-4cec-4a07-a51b-4eadce5fb78a",
+      "name": "Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "A9lAUI2oMIYjgm3K",
+          "name": "Intern Database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "=  {\n    \"status\": \"success\",\n    \"message\": \"Daily log saved successfully\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        0
+      ],
+      "id": "ec78145b-1a12-48b0-9465-a1573beb1818",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "0b3feb87-830e-4430-9c1b-38c37bbf38b6",
+  "triggerCount": 1,
+  "tags": []
+}

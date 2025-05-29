@@ -1,0 +1,93 @@
+{
+  "createdAt": "2025-05-29T20:47:13.900Z",
+  "updatedAt": "2025-05-29T21:57:55.000Z",
+  "id": "4fQJRlF8Z71NhhHh",
+  "name": "DB Get Logs Fixed",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-logs-db",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        280,
+        300
+      ],
+      "webhookId": "get-logs-fixed"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Postgres').all() }}",
+        "options": {}
+      },
+      "id": "respond1",
+      "name": "Return Data",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM daily_logs ORDER BY created_at DESC LIMIT 50",
+        "additionalFields": {}
+      },
+      "id": "postgres1",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "A9lAUI2oMIYjgm3K",
+          "name": "Intern Database"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "Return Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "66d8def9-fe06-4f7f-8bdb-2014471f9232",
+  "triggerCount": 1,
+  "tags": []
+}

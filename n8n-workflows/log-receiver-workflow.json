@@ -58,31 +58,12 @@
     },
     {
       "parameters": {
-        "values": {
-          "string": [
-            {
-              "name": "status",
-              "value": "success"
-            },
-            {
-              "name": "message",
-              "value": "Log entry saved successfully"
-            },
-            {
-              "name": "filename",
-              "value": "={{ $json.filename }}"
-            },
-            {
-              "name": "logId",
-              "value": "={{ $json.logId }}"
-            }
-          ]
-        },
-        "options": {}
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'success',\n  message: 'Log entry saved successfully',\n  filename: $json.filename,\n  logId: $json.logId,\n  savedAt: $json.savedAt\n}) }}"
       },
       "id": "response",
-      "name": "Response",
-      "type": "n8n-nodes-base.set",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [780, 240]
     }
@@ -103,7 +84,7 @@
       "main": [
         [
           {
-            "node": "Response",
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
@@ -113,5 +94,5 @@
   },
   "active": true,
   "settings": {},
-  "versionId": "3"
+  "versionId": "4"
 } 

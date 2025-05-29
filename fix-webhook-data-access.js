@@ -1,173 +1,176 @@
+#!/usr/bin/env node
+
 const axios = require('axios');
 
-const api = axios.create({
-  baseURL: 'http://localhost:5678/api/v1',
+// n8n API configuration  
+const N8N_BASE_URL = 'http://localhost:5678/api/v1';
+const N8N_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzZjQ0NzkxMy00ZGEzLTQwYjItYWYwNC04NzgxMmQzMjUyNDEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzQ4NTM3NDk4fQ.yWJUDoDwRmEgrdRFC8KGgA7EWoG75_jysj2equeOJ4Q';
+
+// Create axios instance
+const n8nApi = axios.create({
+  baseURL: N8N_BASE_URL,
   headers: {
-    'X-N8N-API-KEY': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzZjQ0NzkxMy00ZGEzLTQwYjItYWYwNC04NzgxMmQzMjUyNDEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzQ4NTM3NDk4fQ.yWJUDoDwRmEgrdRFC8KGgA7EWoG75_jysj2equeOJ4Q',
+    'X-N8N-API-KEY': N8N_API_KEY,
     'Content-Type': 'application/json'
   }
 });
 
-async function fixWebhookDataAccess() {
+async function fixGetLogsWorkflow() {
+  console.log('🔧 Fixing DB Get Logs workflow...\n');
+  
   try {
-    console.log('🔧 Fixing webhook data access in authentication workflow...');
+    // 1. Create a working DB Get Logs workflow (without active field)
+    console.log('🔧 Creating new working DB Get Logs workflow...');
     
-    // Find the active Auth Login Working workflow
-    const workflows = await api.get('/workflows');
-    const authWorkflow = workflows.data.data.find(w => 
-      w.name === 'Auth Login Working' && w.active
-    );
-    
-    if (!authWorkflow) {
-      console.error('❌ Active Auth Login Working workflow not found!');
-      return;
-    }
-    
-    console.log(`📋 Found workflow: ${authWorkflow.name} (${authWorkflow.id})`);
-    
-    // Get the full workflow
-    const workflow = await api.get(`/workflows/${authWorkflow.id}`);
-    const fullWorkflow = workflow.data.data || workflow.data;
-    
-    // Update the code node with corrected data access
-    const updatedNodes = fullWorkflow.nodes.map(node => {
-      if (node.type === 'n8n-nodes-base.code') {
-        return {
-          ...node,
+    const workflowData = {
+      name: "DB Get Logs Fixed",
+      nodes: [
+        {
           parameters: {
-            ...node.parameters,
-            jsCode: `// Authentication System
-const users = {
-  'sjalagam@wolfflogics.com': {
-    email: 'sjalagam@wolfflogics.com',
-    password: 'iamanintern',
-    name: 'Srujan Jalagam',
-    role: 'intern',
-    id: 'intern_001',
-    permissions: ['submit_daily_log', 'view_own_data']
-  },
-  'dsolomon@wolfflogics.com': {
-    email: 'dsolomon@wolfflogics.com', 
-    password: 'lmaowow',
-    name: 'Danny Solomon',
-    role: 'admin',
-    id: 'admin_001',
-    permissions: ['view_all_data', 'generate_summaries', 'generate_reports', 'submit_daily_log']
-  },
-  'ehammond@wolfflogics.com': {
-    email: 'ehammond@wolfflogics.com',
-    password: 'imaderp', 
-    name: 'Ezekiel Hammond',
-    role: 'admin',
-    id: 'admin_002',
-    permissions: ['view_all_data', 'generate_summaries', 'generate_reports', 'submit_daily_log']
-  },
-  'pcounts@wolfflogics.com': {
-    email: 'pcounts@wolfflogics.com',
-    password: 'imalsoaderp',
-    name: 'Philip Counts', 
-    role: 'admin',
-    id: 'admin_003',
-    permissions: ['view_all_data', 'generate_summaries', 'generate_reports', 'submit_daily_log']
-  }
-};
-
-// Get request data - check both possible data structures
-const requestData = $input.first().json;
-console.log('Full request data:', JSON.stringify(requestData, null, 2));
-
-const email = requestData.body?.email || requestData.email;
-const password = requestData.body?.password || requestData.password;
-
-console.log('Login request for:', email);
-console.log('Password provided:', !!password);
-
-if (!email || !password) {
-  return [{
-    json: {
-      success: false,
-      error: 'Email and password are required'
-    }
-  }];
-}
-
-const user = users[email.toLowerCase()];
-
-if (!user || user.password !== password) {
-  console.log('Authentication failed for:', email);
-  return [{
-    json: {
-      success: false,
-      error: 'Invalid credentials'
-    }
-  }];
-}
-
-console.log('Successful login:', user.name);
-
-return [{
-  json: {
-    success: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      permissions: user.permissions
-    },
-    loginTime: new Date().toISOString(),
-    message: \`Welcome back, \${user.name}!\`
-  }
-}];`
+            httpMethod: "GET",
+            path: "get-logs-db",
+            responseMode: "responseNode",
+            options: {}
+          },
+          id: "webhook1",
+          name: "Webhook",
+          type: "n8n-nodes-base.webhook",
+          typeVersion: 1,
+          position: [280, 300],
+          webhookId: "get-logs-fixed"
+        },
+        {
+          parameters: {
+            operation: "executeQuery",
+            query: "SELECT * FROM daily_logs ORDER BY created_at DESC LIMIT 50",
+            additionalFields: {}
+          },
+          id: "postgres1",
+          name: "Get from Database",
+          type: "n8n-nodes-base.postgres",
+          typeVersion: 1,
+          position: [500, 300],
+          credentials: {
+            postgres: {
+              id: "A9lAUI2oMIYjgm3K",
+              name: "Postgres account"
+            }
           }
-        };
-      }
-      return node;
-    });
-    
-    // Update the workflow
-    const updateData = {
-      name: fullWorkflow.name,
-      nodes: updatedNodes,
-      connections: fullWorkflow.connections,
-      settings: fullWorkflow.settings || {}
+        },
+        {
+          parameters: {
+            respondWith: "json",
+            responseBody: `{
+  "status": "success",
+  "logs": {{ $json }},
+  "count": {{ $json.length || 0 }}
+}`,
+            options: {}
+          },
+          id: "respond1",
+          name: "Return Data",
+          type: "n8n-nodes-base.respondToWebhook",
+          typeVersion: 1,
+          position: [720, 300]
+        }
+      ],
+      connections: {
+        "Webhook": {
+          main: [
+            [
+              {
+                node: "Get from Database",
+                type: "main",
+                index: 0
+              }
+            ]
+          ]
+        },
+        "Get from Database": {
+          main: [
+            [
+              {
+                node: "Return Data",
+                type: "main",
+                index: 0
+              }
+            ]
+          ]
+        }
+      },
+      settings: {}
     };
     
-    await api.put(`/workflows/${authWorkflow.id}`, updateData);
+    const createResponse = await n8nApi.post('/workflows', workflowData);
+    const newWorkflowId = createResponse.data.id;
+    console.log(`✅ Created new workflow: ${newWorkflowId}`);
     
-    console.log('✅ Authentication workflow updated with corrected data access!');
-    console.log('🔗 Endpoint: http://localhost:5678/webhook/auth-login');
+    // 2. Now activate it using the correct API endpoint
+    console.log('\n🔄 Activating new workflow...');
+    try {
+      // Use the activation endpoint
+      await n8nApi.post(`/workflows/${newWorkflowId}/activate`);
+      console.log('✅ Activated new workflow');
+    } catch (activateError) {
+      // Fallback to PUT method
+      try {
+        const workflow = createResponse.data;
+        workflow.active = true;
+        await n8nApi.put(`/workflows/${newWorkflowId}`, workflow);
+        console.log('✅ Activated new workflow (fallback method)');
+      } catch (putError) {
+        console.log('⚠️  Could not activate automatically - activate manually in n8n UI');
+      }
+    }
     
-    // Test the authentication
-    console.log('\n🧪 Testing authentication...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await testAuth();
+    // 3. Deactivate the old broken workflow
+    console.log('\n🔄 Deactivating old broken workflow...');
+    try {
+      const currentWorkflowId = 'X9RkVAmKsXDr526f';
+      await n8nApi.post(`/workflows/${currentWorkflowId}/deactivate`);
+      console.log('✅ Deactivated old workflow');
+    } catch (error) {
+      console.log('⚠️  Could not deactivate old workflow (may already be inactive)');
+    }
+    
+    // 4. Wait for webhook registration
+    console.log('\n⏳ Waiting for webhook registration...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // 5. Test the new endpoint
+    console.log('\n🧪 Testing new get-logs endpoint...');
+    try {
+      const testResponse = await axios.get('http://localhost:5678/webhook/get-logs-db');
+      console.log(`✅ Success: ${testResponse.status}`);
+      console.log('Response preview:', JSON.stringify(testResponse.data).substring(0, 200) + '...');
+      
+      if (testResponse.data && testResponse.data.logs) {
+        console.log(`📊 Found ${testResponse.data.count || 0} log entries`);
+        console.log('\n🎉 SUCCESS! The get-logs endpoint is now working!');
+      } else if (testResponse.data.message === "Workflow was started") {
+        console.log('\n⚠️  Still getting "Workflow was started" - manual activation needed');
+        console.log('📝 Go to n8n UI and manually activate "DB Get Logs Fixed" workflow');
+      }
+  } catch (error) {
+      console.log(`❌ Test failed: ${error.response?.status} - ${error.message}`);
+    if (error.response?.data) {
+        console.log('Error data:', JSON.stringify(error.response.data));
+      }
+    }
+    
+    console.log('\n🎯 NEXT STEPS:');
+    console.log('1. If webhook still not working, manually activate "DB Get Logs Fixed" in n8n UI');
+    console.log('2. Test your frontend - logs should now display!');
+    console.log('3. Restart frontend if needed: docker-compose restart frontend');
     
   } catch (error) {
-    console.error('❌ Error fixing webhook data access:', error.message);
-    if (error.response?.data) {
-      console.error('API Error:', JSON.stringify(error.response.data, null, 2));
+    console.error('❌ Error fixing workflow:', error.message);
+    if (error.response) {
+      console.error(`Status: ${error.response.status}`);
+      console.error(`Data:`, JSON.stringify(error.response.data, null, 2));
     }
   }
 }
 
-async function testAuth() {
-  try {
-    console.log('Testing intern login...');
-    const response = await axios.post('http://localhost:5678/webhook/auth-login', {
-      email: 'sjalagam@wolfflogics.com',
-      password: 'iamanintern'
-    });
-    
-    console.log('✅ Test successful!');
-    console.log('Response:', JSON.stringify(response.data, null, 2));
-    
-  } catch (error) {
-    console.log('❌ Test failed:', error.message);
-    if (error.response?.data) {
-      console.log('Response data:', error.response.data);
-    }
-  }
-}
-
-fixWebhookDataAccess(); 
+// Run the fix
+fixGetLogsWorkflow(); 

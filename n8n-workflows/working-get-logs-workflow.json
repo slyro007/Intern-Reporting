@@ -1,0 +1,63 @@
+{
+  "name": "Working Get Intern Logs",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "intern-logs-get",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [340, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read log files for a specific intern\nconst fs = require('fs');\nconst path = require('path');\n\n// Get email from query parameters\nconst query = $input.first().json.query || {};\nconst internEmail = query.email || 'unknown';\n\n// Read logs directory\nconst logsDir = '/data/logs';\nlet logs = [];\n\ntry {\n  if (fs.existsSync(logsDir)) {\n    const files = fs.readdirSync(logsDir);\n    \n    for (const file of files) {\n      if (file.endsWith('.json') && file !== '.gitkeep') {\n        try {\n          const filepath = path.join(logsDir, file);\n          const content = fs.readFileSync(filepath, 'utf8');\n          const logData = JSON.parse(content);\n          \n          // Filter by intern email\n          if (logData.internEmail === internEmail) {\n            logs.push(logData);\n          }\n        } catch (err) {\n          console.error('Error reading file:', file, err.message);\n        }\n      }\n    }\n  }\n  \n  // Sort logs by date (newest first)\n  logs.sort((a, b) => new Date(b.date || b.savedAt) - new Date(a.date || a.savedAt));\n  \n  console.log(`Found ${logs.length} logs for ${internEmail}`);\n  \n} catch (error) {\n  console.error('Error reading logs:', error.message);\n}\n\nreturn [{\n  json: {\n    status: 'success',\n    message: 'Logs retrieved successfully',\n    data: logs,\n    internEmail: internEmail,\n    count: logs.length\n  }\n}];"
+      },
+      "id": "read-logs",
+      "name": "Read Logs from Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "response",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [780, 240]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Logs from Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Logs from Files": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+} 

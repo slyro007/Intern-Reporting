@@ -12,6 +12,7 @@ const InternDashboard = () => {
   const [activeTab, setActiveTab] = useState('submit-log');
   const [myLogs, setMyLogs] = useState([]);
   const [myEvaluations, setMyEvaluations] = useState([]);
+  const [selectedLog, setSelectedLog] = useState(null);
 
   // Daily log form state
   const [dailyLog, setDailyLog] = useState({
@@ -40,22 +41,25 @@ const InternDashboard = () => {
 
   const fetchMyData = async () => {
     try {
-      // Try to fetch the intern's own logs and evaluations
+      // Try to fetch the intern's own logs and evaluations using database endpoints
       const [logsResponse, evalsResponse] = await Promise.allSettled([
-        axios.get(`http://localhost:5678/webhook/get-intern-logs?email=${user?.email}`),
-        axios.get(`http://localhost:5678/webhook/get-intern-evaluations?email=${user?.email}`)
+        axios.get(`/webhook/get-logs-db`), // Back to get-logs-db for retrieving data
+        axios.get(`/webhook/get-intern-evaluations?email=${user?.email}`)
       ]);
 
       // Set logs data if successful, otherwise empty array
       if (logsResponse.status === 'fulfilled' && logsResponse.value.data) {
-        setMyLogs(Array.isArray(logsResponse.value.data) ? logsResponse.value.data : []);
+        // Handle the raw array format from n8n - data is nested in json property
+        const logsData = logsResponse.value.data;
+        const processedLogs = Array.isArray(logsData) ? logsData.map(item => item.json || item) : [];
+        setMyLogs(processedLogs);
       } else {
         setMyLogs([]);
       }
 
       // Set evaluations data if successful, otherwise empty array
       if (evalsResponse.status === 'fulfilled' && evalsResponse.value.data) {
-        setMyEvaluations(Array.isArray(evalsResponse.value.data) ? evalsResponse.value.data : []);
+        setMyEvaluations(Array.isArray(evalsResponse.value.data.data) ? evalsResponse.value.data.data : []);
       } else {
         setMyEvaluations([]);
       }
@@ -72,7 +76,7 @@ const InternDashboard = () => {
     setLoading(true);
     
     try {
-      await axios.post('http://localhost:5678/webhook/submit-daily-log', {
+      await axios.post('/webhook/daily-logs-new', {
         ...dailyLog,
         internEmail: user?.email,
         internName: user?.name,
@@ -95,6 +99,11 @@ const InternDashboard = () => {
       setTimeout(() => {
         fetchMyData();
       }, 1000);
+
+      // Clear the message after 3 seconds
+      setTimeout(() => {
+        setMessage('');
+      }, 3000);
     } catch (error) {
       setMessage('Failed to submit daily log. Please try again.');
       console.error('Error submitting log:', error);
@@ -108,7 +117,7 @@ const InternDashboard = () => {
     setLoading(true);
     
     try {
-      await axios.post('http://localhost:5678/webhook/submit-self-evaluation', {
+      await axios.post('/webhook/submit-self-evaluation', {
         ...selfEval,
         internEmail: user?.email,
         internName: user?.name,
@@ -132,6 +141,11 @@ const InternDashboard = () => {
       setTimeout(() => {
         fetchMyData();
       }, 1000);
+
+      // Clear the message after 3 seconds
+      setTimeout(() => {
+        setMessage('');
+      }, 3000);
     } catch (error) {
       setMessage('Failed to submit self-evaluation. Please try again.');
       console.error('Error submitting evaluation:', error);
@@ -423,35 +437,217 @@ const InternDashboard = () => {
               {/* My Daily Logs */}
               <div className="mb-8">
                 <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Daily Logs</h3>
-                {myLogs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="mb-4">
-                      <svg className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                {selectedLog ? (
+                  // Detailed Log View
+                  <div>
+                    <button
+                      onClick={() => setSelectedLog(null)}
+                      className="mb-6 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 flex items-center font-medium"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                       </svg>
-                    </div>
-                    <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">No daily logs yet</h4>
-                    <p className="text-gray-500 dark:text-gray-400">Your submitted daily logs will appear here.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {myLogs.map((log, index) => (
-                      <div key={index} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="text-md font-semibold text-gray-800 dark:text-white">{log.date}</h4>
-                          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-sm">
-                            {log.timeSpent}h
-                          </span>
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                          <strong>Project:</strong> {log.projectDescription}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">
-                          <strong>Tasks:</strong> {log.tasksCompleted}
+                      ← Back to All Logs
+                    </button>
+                    
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                      {/* Header Section */}
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-xl">
+                        <h3 className="text-2xl font-bold mb-2">
+                          📋 Daily Log Details
+                        </h3>
+                        <p className="text-blue-100">
+                          {selectedLog.log_date ? new Date(selectedLog.log_date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          }) : 'No date'}
                         </p>
                       </div>
-                    ))}
+                      
+                      {/* Content Section */}
+                      <div className="p-6 space-y-6">
+                        {/* Date and Time Grid */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div className="flex items-center mb-2">
+                              <span className="text-lg mr-2">📅</span>
+                              <h4 className="font-semibold text-gray-800 dark:text-white">Date</h4>
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300 text-lg">
+                              {selectedLog.log_date ? new Date(selectedLog.log_date).toLocaleDateString() : 'No date'}
+                            </p>
+                          </div>
+                          
+                          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                            <div className="flex items-center mb-2">
+                              <span className="text-lg mr-2">⏱️</span>
+                              <h4 className="font-semibold text-blue-800 dark:text-blue-200">Time Spent</h4>
+                            </div>
+                            <p className="text-blue-700 dark:text-blue-300 text-xl font-bold">
+                              {selectedLog.time_spent || 'Not specified'} hours
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Project Section */}
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-5 border border-purple-200 dark:border-purple-700">
+                          <div className="flex items-center mb-3">
+                            <span className="text-xl mr-2">🚀</span>
+                            <h4 className="font-bold text-purple-800 dark:text-purple-200 text-lg">Project Description</h4>
+                          </div>
+                          <p className="text-purple-700 dark:text-purple-300 leading-relaxed">
+                            {selectedLog.project_description || 'No description provided'}
+                          </p>
+                        </div>
+
+                        {/* Tasks Section */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-5 border border-green-200 dark:border-green-700">
+                          <div className="flex items-center mb-3">
+                            <span className="text-xl mr-2">✅</span>
+                            <h4 className="font-bold text-green-800 dark:text-green-200 text-lg">Tasks Completed</h4>
+                          </div>
+                          <p className="text-green-700 dark:text-green-300 leading-relaxed">
+                            {selectedLog.tasks_completed || 'No tasks listed'}
+                          </p>
+                        </div>
+
+                        {/* Challenges Section */}
+                        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-lg p-5 border border-orange-200 dark:border-orange-700">
+                          <div className="flex items-center mb-3">
+                            <span className="text-xl mr-2">⚠️</span>
+                            <h4 className="font-bold text-orange-800 dark:text-orange-200 text-lg">Challenges Faced</h4>
+                          </div>
+                          <p className="text-orange-700 dark:text-orange-300 leading-relaxed">
+                            {selectedLog.challenges || 'No challenges noted'}
+                          </p>
+                        </div>
+
+                        {/* Notes Section */}
+                        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg p-5 border border-indigo-200 dark:border-indigo-700">
+                          <div className="flex items-center mb-3">
+                            <span className="text-xl mr-2">📝</span>
+                            <h4 className="font-bold text-indigo-800 dark:text-indigo-200 text-lg">Additional Notes</h4>
+                          </div>
+                          <p className="text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                            {selectedLog.notes || 'No additional notes'}
+                          </p>
+                        </div>
+
+                        {/* Metadata Footer */}
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border-t-4 border-blue-500">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                👤 <strong>Submitted by:</strong> {selectedLog.intern_name}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                📧 {selectedLog.intern_email}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                🕒 <strong>Submitted on:</strong>
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {selectedLog.created_at ? new Date(selectedLog.created_at).toLocaleString() : 'Unknown'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                ) : (
+                  // Log List View
+                  <>
+                    {myLogs.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="mb-4">
+                          <svg className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">No daily logs yet</h4>
+                        <p className="text-gray-500 dark:text-gray-400">Your submitted daily logs will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {myLogs.map((log, index) => (
+                          <div 
+                            key={index} 
+                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-6 cursor-pointer hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                            onClick={() => setSelectedLog(log)}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <h4 className="text-lg font-bold text-gray-800 dark:text-white mb-1">
+                                  📅 {log.log_date ? new Date(log.log_date).toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                  }) : 'No date'}
+                                </h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  Submitted on {log.created_at ? new Date(log.created_at).toLocaleDateString() : 'Unknown date'}
+                                </p>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                  ⏱️ {log.time_spent}h
+                                </span>
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">🚀 Project</p>
+                                <p className="text-gray-800 dark:text-gray-200">{log.project_description}</p>
+                              </div>
+                              
+                              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">✅ Tasks Completed</p>
+                                <p className="text-gray-800 dark:text-gray-200">{log.tasks_completed}</p>
+                              </div>
+                              
+                              {log.challenges && (
+                                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                                  <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">⚠️ Challenges</p>
+                                  <p className="text-orange-800 dark:text-orange-200">{log.challenges}</p>
+                                </div>
+                              )}
+                              
+                              {log.notes && (
+                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">📝 Notes</p>
+                                  <p className="text-blue-800 dark:text-blue-200">{log.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  Click to view full details and edit options
+                                </div>
+                                <div className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">
+                                  View Details 
+                                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5-5 5M6 12h12" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

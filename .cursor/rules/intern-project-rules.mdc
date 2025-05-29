@@ -3,36 +3,87 @@ description:
 globs: 
 alwaysApply: true
 ---
-[
-  {
-    "type": "general",
-    "instruction": "I'm building a self-hosted tracking system for an intern at our MSP (Wolff Logics). The intern mostly works on computer setups using immy.bot, and I want to log daily/weekly updates, generate weekly AI summaries, and produce a final report."
-  },
-  {
-    "type": "code",
-    "instruction": "When helping with backend automation, assume I’m using n8n self-hosted and prefer low-code or JSON-based node flows when possible."
-  },
-  {
-    "type": "code",
-    "instruction": "For data storage, assume a lightweight JSON file or SQLite database unless otherwise specified. Help me keep it simple and portable."
-  },
-  {
-    "type": "code",
-    "instruction": "When suggesting OpenAI prompts, aim for summarizing progress logs into weekly summaries and polished final reports. Assume the AI will be used in n8n’s OpenAI node."
-  },
-  {
-    "type": "ui",
-    "instruction": "If we’re building a frontend, I prefer minimal HTML or a Flask-based form that can POST to a local webhook. Keep it clean and functional."
-  },
-  {
-    "type": "dev",
-    "instruction": "Help me structure this project so I can easily add Teams integration later, but don’t require it for v1."
-  },
-  {
-    "type": "reminder",
-    "instruction": "Remind me to keep logs organized by week so I can generate clean summaries later."
-  }
-  
-]
-
-
+{
+  "intern-project-rules": [
+    {
+      "type": "general",
+      "instruction": "I'm building a self-hosted tracking system for an intern at our MSP (Wolff Logics). The intern mostly works on computer setups using immy.bot, and I want to log daily/weekly updates, generate weekly AI summaries, and produce a final report."
+    },
+    {
+      "type": "code",
+      "instruction": "When helping with backend automation, assume I'm using n8n self-hosted and prefer low-code or JSON-based node flows when possible."
+    },
+    {
+      "type": "database",
+      "instruction": "ALWAYS use PostgreSQL database storage instead of file storage. File storage causes reliability issues. Use proper database schemas with tables: users, daily_logs, self_evaluations, weekly_summaries, final_reports. Include foreign key relationships and indexes."
+    },
+    {
+      "type": "database",
+      "instruction": "For database setup, use Docker containers with PostgreSQL 15-alpine, include Adminer for database administration, and create init.sql scripts for schema initialization."
+    },
+    {
+      "type": "n8n",
+      "instruction": "When creating n8n workflows, prefer manual creation in the UI over API imports for webhook registration reliability. Webhooks often fail to register properly when imported via API."
+    },
+    {
+      "type": "n8n",
+      "instruction": "For n8n database integration, always configure PostgreSQL credentials first, then create workflows that use proper database nodes. Use webhook paths like 'daily-logs-db' and 'get-logs-db' for clarity."
+    },
+    {
+      "type": "docker",
+      "instruction": "Structure Docker services with proper dependencies: database must start first, then n8n and frontend depend on database. Use volumes for data persistence and proper environment variables for database connections."
+    },
+    {
+      "type": "frontend",
+      "instruction": "For React frontends, configure proxy in package.json to redirect /webhook/* requests to n8n. Frontend must be restarted after proxy configuration changes. Use relative paths for API calls, not absolute localhost URLs."
+    },
+    {
+      "type": "debugging",
+      "instruction": "When troubleshooting webhook issues: 404 = not registered, 500 = registered but code error, 200 = working. Always test webhooks directly before blaming frontend issues."
+    },
+    {
+      "type": "code",
+      "instruction": "When suggesting OpenAI prompts, aim for summarizing progress logs into weekly summaries and polished final reports. Assume the AI will be used in n8n's OpenAI node."
+    },
+    {
+      "type": "ui",
+      "instruction": "If we're building a frontend, I prefer minimal HTML or a Flask-based form that can POST to a local webhook. Keep it clean and functional. For React apps, ensure proper proxy configuration."
+    },
+    {
+      "type": "dev",
+      "instruction": "Help me structure this project so I can easily add Teams integration later, but don't require it for v1."
+    },
+    {
+      "type": "containers",
+      "instruction": "Always provide docker-compose.yml with all services: frontend, n8n, database (PostgreSQL), and adminer. Include proper networking, volumes, and environment variables."
+    },
+    {
+      "type": "workflow-creation",
+      "instruction": "When creating n8n workflows, provide both JSON files for reference AND step-by-step manual creation instructions. API imports often fail for webhook registration."
+    },
+    {
+      "type": "credentials",
+      "instruction": "For database credentials in n8n, use: Host=database, Port=5432, Database=intern_tracker, User=intern_user, Password=intern_password123. Always mention this needs manual configuration in n8n UI."
+    },
+    {
+      "type": "testing",
+      "instruction": "Create comprehensive testing scripts that check: container status, database connectivity, webhook registration, and end-to-end functionality. Test both direct API calls and frontend integration."
+    },
+    {
+      "type": "data-structure",
+      "instruction": "Structure log data with proper fields: intern_email, intern_name, log_date, project_description, tasks_completed, time_spent, challenges, notes, created_at, updated_at."
+    },
+    {
+      "type": "troubleshooting",
+      "instruction": "When fixing issues, always check in order: 1) Container status, 2) Database connectivity, 3) n8n credential configuration, 4) Workflow activation status, 5) Webhook registration, 6) Frontend proxy settings."
+    },
+    {
+      "type": "admin-tools",
+      "instruction": "Always include Adminer (database admin interface) at port 8080 for easy database management and debugging. Provide connection details: server=database, username=intern_user, password=intern_password123, database=intern_tracker."
+    },
+    {
+      "type": "reminder",
+      "instruction": "Remind me to keep logs organized by week so I can generate clean summaries later. Database structure supports this with proper date indexing and relationships."
+    }
+  ]
+}

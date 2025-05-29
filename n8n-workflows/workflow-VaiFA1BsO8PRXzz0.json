@@ -1,0 +1,58 @@
+{
+  "createdAt": "2025-05-29T20:13:10.015Z",
+  "updatedAt": "2025-05-29T20:20:17.000Z",
+  "id": "VaiFA1BsO8PRXzz0",
+  "name": "Daily Logs Working",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "daily-logs-new",
+        "options": {}
+      },
+      "id": "webhook1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\":\"success\",\"message\":\"Daily log received successfully\",\"data\":\"{{ JSON.stringify($json) }}\",\"timestamp\":\"{{ $now }}\",\"note\":\"Log saved and acknowledged\"}"
+      },
+      "id": "respond1",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "6a464ebe-9db3-4495-8383-84ec0dd17b14",
+  "triggerCount": 1,
+  "tags": []
+}

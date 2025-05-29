@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:5678/webhook/auth-login', {
+      const response = await axios.post('/webhook/auth-login', {
         email,
         password
       }, {

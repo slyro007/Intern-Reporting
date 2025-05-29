@@ -1,0 +1,86 @@
+{
+  "createdAt": "2025-05-29T19:42:55.799Z",
+  "updatedAt": "2025-05-29T20:20:32.000Z",
+  "id": "jkiGGbbjOV8fHJLY",
+  "name": "Working Daily Logs Final",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "id": "webhook-working",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "simple-logs-post",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "code-working",
+      "name": "Save Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// Save the log data to a file with proper error handling\nconst fs = require('fs');\nconst path = require('path');\n\ntry {\n  // Get the data from the webhook\n  const logData = $input.first().json;\n  console.log('📥 Received log data:', JSON.stringify(logData, null, 2));\n\n  // Create filename based on date and intern info\n  const date = logData.date || new Date().toISOString().split('T')[0];\n  const internName = (logData.internName || logData.internEmail || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');\n  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');\n  const filename = `${date}_${internName}_${timestamp}.json`;\n\n  // Use Docker-friendly path\n  const logsDir = './data/logs';\n  \n  // Create directory if it doesn't exist\n  if (!fs.existsSync(logsDir)) {\n    console.log('📁 Creating logs directory:', logsDir);\n    fs.mkdirSync(logsDir, { recursive: true });\n  }\n\n  // Add metadata to the log\n  const logWithMeta = {\n    ...logData,\n    id: `${date}_${timestamp}`,\n    savedAt: new Date().toISOString(),\n    filename: filename\n  };\n\n  // Save to file\n  const filepath = path.join(logsDir, filename);\n  fs.writeFileSync(filepath, JSON.stringify(logWithMeta, null, 2));\n\n  console.log('✅ Successfully saved log to:', filepath);\n\n  // Return success response\n  return [{\n    json: {\n      status: 'success',\n      message: 'Daily log saved successfully',\n      filename: filename,\n      logId: logWithMeta.id,\n      savedAt: logWithMeta.savedAt,\n      data: logWithMeta\n    }\n  }];\n  \n} catch (error) {\n  console.error('❌ Error saving log:', error.message);\n  console.error('📍 Stack trace:', error.stack);\n  \n  // Return error response but don't throw\n  return [{\n    json: {\n      status: 'error',\n      message: 'Failed to save daily log: ' + error.message,\n      error: error.toString(),\n      timestamp: new Date().toISOString()\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "respond-working",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Log": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "93badc78-645b-4f34-b425-c036924c8ef4",
+  "triggerCount": 1,
+  "tags": []
+}

@@ -1,0 +1,61 @@
+{
+  "name": "Simple Working Logs",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "simple-logs-post",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [340, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Save the log data to a file\nconst fs = require('fs');\nconst path = require('path');\n\n// Get the data from the webhook\nconst logData = $input.first().json;\n\n// Create filename based on date and intern name\nconst date = logData.date || new Date().toISOString().split('T')[0];\nconst internName = (logData.internName || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');\nconst timestamp = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `${date}_${internName}_${timestamp}.json`;\n\n// Ensure logs directory exists\nconst logsDir = '/data/logs';\nif (!fs.existsSync(logsDir)) {\n  fs.mkdirSync(logsDir, { recursive: true });\n}\n\n// Add metadata to the log\nconst logWithMeta = {\n  ...logData,\n  id: `${date}_${timestamp}`,\n  savedAt: new Date().toISOString(),\n  filename: filename\n};\n\n// Save to file\nconst filepath = path.join(logsDir, filename);\nfs.writeFileSync(filepath, JSON.stringify(logWithMeta, null, 2));\n\nconsole.log('Saved log to:', filepath);\n\nreturn [{\n  json: {\n    status: 'success',\n    message: 'Daily log saved successfully',\n    filename: filename,\n    logId: logWithMeta.id,\n    savedAt: logWithMeta.savedAt\n  }\n}];"
+      },
+      "id": "save-log",
+      "name": "Save Log to File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "response",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [780, 240]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Log to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Log to File": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+} 

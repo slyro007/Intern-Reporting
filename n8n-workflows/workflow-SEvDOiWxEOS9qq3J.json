@@ -1,0 +1,113 @@
+{
+  "createdAt": "2025-05-29T20:04:28.123Z",
+  "updatedAt": "2025-05-29T20:25:27.000Z",
+  "id": "SEvDOiWxEOS9qq3J",
+  "name": "DB Daily Logs",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "daily-logs-db",
+        "options": {}
+      },
+      "id": "webhook1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        280,
+        300
+      ],
+      "webhookId": "ed4495a1-2cfe-4360-b0a7-354df80d6a6e"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "name"
+        },
+        "table": {
+          "__rl": true,
+          "value": "daily_logs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "intern_email": "={{ $json.internEmail }}",
+            "intern_name": "={{ $json.internName }}",
+            "log_date": "={{ $json.date }}",
+            "project_description": "={{ $json.projectDescription }}",
+            "tasks_completed": "={{ $json.tasksCompleted }}",
+            "time_spent": "={{ parseFloat($json.timeSpent) }}",
+            "challenges": "={{ $json.challenges }}",
+            "notes": "={{ $json.notes }}"
+          }
+        },
+        "additionalFields": {}
+      },
+      "id": "postgres1",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "A9lAUI2oMIYjgm3K",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\": \"success\", \"message\": \"Log saved to database\", \"timestamp\": \"{{ $now }}\"}",
+        "options": {}
+      },
+      "id": "respond1",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Database": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b6c195d4-ee5f-4984-bd38-5bd598d9a322",
+  "triggerCount": 1,
+  "tags": []
+}

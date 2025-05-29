@@ -1,0 +1,111 @@
+{
+  "name": "Database Get Logs Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-logs-db",
+        "options": {},
+        "httpMethod": "GET"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [280, 300],
+      "webhookId": "get-logs-db"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "name"
+        },
+        "table": {
+          "__rl": true,
+          "value": "daily_logs",
+          "mode": "name"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "intern_email",
+              "condition": "equal",
+              "value": "={{ $json.query.email }}"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "log_date",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "limit": 50
+      },
+      "id": "get-from-database",
+      "name": "Get from Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [500, 300],
+      "credentials": {
+        "postgres": {
+          "id": "intern-tracker-db",
+          "name": "Intern Tracker Database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"data\": {{ JSON.stringify($json) }},\n  \"count\": {{ $json.length }}\n}",
+        "options": {
+          "responseHeaders": {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+          }
+        }
+      },
+      "id": "respond-logs",
+      "name": "Respond with Logs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get from Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get from Database": {
+      "main": [
+        [
+          {
+            "node": "Respond with Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "America/Chicago"
+  },
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+} 

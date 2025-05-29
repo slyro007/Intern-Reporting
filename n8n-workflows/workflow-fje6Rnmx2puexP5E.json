@@ -1,0 +1,86 @@
+{
+  "createdAt": "2025-05-29T17:38:00.610Z",
+  "updatedAt": "2025-05-29T19:48:45.496Z",
+  "id": "fje6Rnmx2puexP5E",
+  "name": "Auth Login Working",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auth-login",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-node-new",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        260,
+        300
+      ],
+      "webhookId": "auth-login-new"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Authentication System\nconst users = {\n  'sjalagam@wolfflogics.com': {\n    email: 'sjalagam@wolfflogics.com',\n    password: 'iamanintern',\n    name: 'Srujan Jalagam',\n    role: 'intern',\n    id: 'intern_001',\n    permissions: ['submit_daily_log', 'view_own_data']\n  },\n  'dsolomon@wolfflogics.com': {\n    email: 'dsolomon@wolfflogics.com', \n    password: 'lmaowow',\n    name: 'Danny Solomon',\n    role: 'admin',\n    id: 'admin_001',\n    permissions: ['view_all_data', 'generate_summaries', 'generate_reports', 'submit_daily_log']\n  },\n  'ehammond@wolfflogics.com': {\n    email: 'ehammond@wolfflogics.com',\n    password: 'imaderp', \n    name: 'Ezekiel Hammond',\n    role: 'admin',\n    id: 'admin_002',\n    permissions: ['view_all_data', 'generate_summaries', 'generate_reports', 'submit_daily_log']\n  },\n  'pcounts@wolfflogics.com': {\n    email: 'pcounts@wolfflogics.com',\n    password: 'imalsoaderp',\n    name: 'Philip Counts', \n    role: 'admin',\n    id: 'admin_003',\n    permissions: ['view_all_data', 'generate_summaries', 'generate_reports', 'submit_daily_log']\n  }\n};\n\n// Get request data - check both possible data structures\nconst requestData = $input.first().json;\nconsole.log('Full request data:', JSON.stringify(requestData, null, 2));\n\nconst email = requestData.body?.email || requestData.email;\nconst password = requestData.body?.password || requestData.password;\n\nconsole.log('Login request for:', email);\nconsole.log('Password provided:', !!password);\n\nif (!email || !password) {\n  return [{\n    json: {\n      success: false,\n      error: 'Email and password are required'\n    }\n  }];\n}\n\nconst user = users[email.toLowerCase()];\n\nif (!user || user.password !== password) {\n  console.log('Authentication failed for:', email);\n  return [{\n    json: {\n      success: false,\n      error: 'Invalid credentials'\n    }\n  }];\n}\n\nconsole.log('Successful login:', user.name);\n\nreturn [{\n  json: {\n    success: true,\n    user: {\n      id: user.id,\n      email: user.email,\n      name: user.name,\n      role: user.role,\n      permissions: user.permissions\n    },\n    loginTime: new Date().toISOString(),\n    message: `Welcome back, ${user.name}!`\n  }\n}];"
+      },
+      "id": "code-node-new",
+      "name": "Authenticate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "response-node-new",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Authenticate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "15c215eb-2c7f-4d78-a53b-c443fc6eb87c",
+  "triggerCount": 1,
+  "tags": []
+}
