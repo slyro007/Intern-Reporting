@@ -25,15 +25,38 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       // Try to fetch real data from n8n endpoints
-      // For now, we'll start with empty arrays since we haven't set up data storage yet
-      setLogs([]);
-      setReports([]);
-      setSummaries([]);
+      const [logsResponse, reportsResponse, summariesResponse] = await Promise.allSettled([
+        axios.get('http://localhost:5678/webhook/get-daily-logs'),
+        axios.get('http://localhost:5678/webhook/get-reports'),
+        axios.get('http://localhost:5678/webhook/get-summaries')
+      ]);
+
+      // Set logs data if successful, otherwise empty array
+      if (logsResponse.status === 'fulfilled' && logsResponse.value.data) {
+        setLogs(Array.isArray(logsResponse.value.data) ? logsResponse.value.data : []);
+      } else {
+        setLogs([]);
+      }
+
+      // Set reports data if successful, otherwise empty array
+      if (reportsResponse.status === 'fulfilled' && reportsResponse.value.data) {
+        setReports(Array.isArray(reportsResponse.value.data) ? reportsResponse.value.data : []);
+      } else {
+        setReports([]);
+      }
+
+      // Set summaries data if successful, otherwise empty array
+      if (summariesResponse.status === 'fulfilled' && summariesResponse.value.data) {
+        setSummaries(Array.isArray(summariesResponse.value.data) ? summariesResponse.value.data : []);
+      } else {
+        setSummaries([]);
+      }
       
-      setMessage('Admin dashboard loaded. No data entries yet - waiting for intern submissions!');
+      const totalLogs = Array.isArray(logs) ? logs.length : 0;
+      setMessage(`Admin dashboard loaded successfully! Found ${totalLogs} log entries.`);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setMessage('Error loading dashboard data. Please try again.');
+      setMessage('Dashboard loaded. Unable to fetch data from n8n - please check your workflows are running.');
       
       // Set empty arrays as fallback
       setLogs([]);

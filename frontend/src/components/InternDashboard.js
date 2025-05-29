@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -10,6 +10,8 @@ const InternDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('submit-log');
+  const [myLogs, setMyLogs] = useState([]);
+  const [myEvaluations, setMyEvaluations] = useState([]);
 
   // Daily log form state
   const [dailyLog, setDailyLog] = useState({
@@ -31,6 +33,39 @@ const InternDashboard = () => {
     goals: '',
     productivity: '3'
   });
+
+  useEffect(() => {
+    fetchMyData();
+  }, []);
+
+  const fetchMyData = async () => {
+    try {
+      // Try to fetch the intern's own logs and evaluations
+      const [logsResponse, evalsResponse] = await Promise.allSettled([
+        axios.get(`http://localhost:5678/webhook/get-intern-logs?email=${user?.email}`),
+        axios.get(`http://localhost:5678/webhook/get-intern-evaluations?email=${user?.email}`)
+      ]);
+
+      // Set logs data if successful, otherwise empty array
+      if (logsResponse.status === 'fulfilled' && logsResponse.value.data) {
+        setMyLogs(Array.isArray(logsResponse.value.data) ? logsResponse.value.data : []);
+      } else {
+        setMyLogs([]);
+      }
+
+      // Set evaluations data if successful, otherwise empty array
+      if (evalsResponse.status === 'fulfilled' && evalsResponse.value.data) {
+        setMyEvaluations(Array.isArray(evalsResponse.value.data) ? evalsResponse.value.data : []);
+      } else {
+        setMyEvaluations([]);
+      }
+    } catch (error) {
+      console.error('Error fetching my data:', error);
+      // Keep empty arrays as fallback
+      setMyLogs([]);
+      setMyEvaluations([]);
+    }
+  };
 
   const submitDailyLog = async (e) => {
     e.preventDefault();
@@ -55,8 +90,13 @@ const InternDashboard = () => {
         challenges: '',
         notes: ''
       });
+
+      // Refresh data after successful submission
+      setTimeout(() => {
+        fetchMyData();
+      }, 1000);
     } catch (error) {
-      setMessage('Daily log submitted successfully! (Webhook will process it)');
+      setMessage('Failed to submit daily log. Please try again.');
       console.error('Error submitting log:', error);
     } finally {
       setLoading(false);
@@ -87,8 +127,13 @@ const InternDashboard = () => {
         goals: '',
         productivity: '3'
       });
+
+      // Refresh data after successful submission
+      setTimeout(() => {
+        fetchMyData();
+      }, 1000);
     } catch (error) {
-      setMessage('Self-evaluation submitted successfully! (Webhook will process it)');
+      setMessage('Failed to submit self-evaluation. Please try again.');
       console.error('Error submitting evaluation:', error);
     } finally {
       setLoading(false);
@@ -174,7 +219,7 @@ const InternDashboard = () => {
           
           {message && (
             <div className={`mt-4 p-3 rounded-lg ${
-              message.includes('Error') 
+              message.includes('Failed') || message.includes('Error')
                 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' 
                 : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
             }`}>
@@ -187,6 +232,7 @@ const InternDashboard = () => {
         <div className="flex justify-center space-x-4 mb-8">
           <TabButton id="submit-log" label="📝 Submit Daily Log" />
           <TabButton id="self-eval" label="📊 Weekly Self-Evaluation" />
+          <TabButton id="my-logs" label="📋 My Logs" />
         </div>
 
         {/* Intern Content */}
@@ -367,6 +413,81 @@ const InternDashboard = () => {
                   {loading ? 'Submitting...' : 'Submit Self-Evaluation'}
                 </button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'my-logs' && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">My Submissions</h2>
+              
+              {/* My Daily Logs */}
+              <div className="mb-8">
+                <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Daily Logs</h3>
+                {myLogs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="mb-4">
+                      <svg className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">No daily logs yet</h4>
+                    <p className="text-gray-500 dark:text-gray-400">Your submitted daily logs will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myLogs.map((log, index) => (
+                      <div key={index} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="text-md font-semibold text-gray-800 dark:text-white">{log.date}</h4>
+                          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-sm">
+                            {log.timeSpent}h
+                          </span>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                          <strong>Project:</strong> {log.projectDescription}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                          <strong>Tasks:</strong> {log.tasksCompleted}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* My Self Evaluations */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Self-Evaluations</h3>
+                {myEvaluations.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="mb-4">
+                      <svg className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">No evaluations yet</h4>
+                    <p className="text-gray-500 dark:text-gray-400">Your submitted self-evaluations will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myEvaluations.map((evaluation, index) => (
+                      <div key={index} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="text-md font-semibold text-gray-800 dark:text-white">
+                            {evaluation.weekStartDate} - {evaluation.weekEndDate}
+                          </h4>
+                          <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full text-sm">
+                            Productivity: {evaluation.productivity}/5
+                          </span>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                          <strong>Key Accomplishments:</strong> {evaluation.accomplishments}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
