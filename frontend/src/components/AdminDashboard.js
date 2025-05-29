@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [aiLoading, setAiLoading] = useState({ summary: false, report: false });
   const [message, setMessage] = useState('');
   const [logs, setLogs] = useState([]);
+  const [evaluations, setEvaluations] = useState([]);
   const [reports, setReports] = useState([]);
   const [summaries, setSummaries] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,8 +47,9 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       // Try to fetch real data from n8n endpoints
-      const [logsResponse, reportsResponse, summariesResponse] = await Promise.allSettled([
+      const [logsResponse, evaluationsResponse, reportsResponse, summariesResponse] = await Promise.allSettled([
         axios.get('/webhook/get-logs-db'),
+        axios.get('/webhook/get-self-evaluations'),
         axios.get('/webhook/get-reports'),
         axios.get('/webhook/get-summaries')
       ]);
@@ -59,6 +61,20 @@ const AdminDashboard = () => {
         setLogs(processedLogs);
       } else {
         setLogs([]);
+      }
+
+      // Set evaluations data if successful, otherwise empty array
+      if (evaluationsResponse.status === 'fulfilled' && evaluationsResponse.value.data) {
+        const evalsData = evaluationsResponse.value.data;
+        let processedEvals = [];
+        if (Array.isArray(evalsData)) {
+          processedEvals = evalsData.map(item => item.json || item);
+        } else if (evalsData && typeof evalsData === 'object') {
+          processedEvals = [evalsData.json || evalsData];
+        }
+        setEvaluations(processedEvals);
+      } else {
+        setEvaluations([]);
       }
 
       // Set reports data if successful, otherwise empty array
@@ -75,7 +91,7 @@ const AdminDashboard = () => {
         setSummaries([]);
       }
       
-      setMessage(`Admin dashboard loaded successfully! Found ${logs.length} log entries.`);
+      setMessage(`Admin dashboard loaded successfully! Found ${logs.length} log entries and ${evaluations.length} evaluations.`);
       
       // Clear the message after 3 seconds
       setTimeout(() => {
@@ -87,6 +103,7 @@ const AdminDashboard = () => {
       
       // Set empty arrays as fallback
       setLogs([]);
+      setEvaluations([]);
       setReports([]);
       setSummaries([]);
     } finally {
@@ -311,10 +328,9 @@ const AdminDashboard = () => {
         <div className={`${sidebarOpen ? 'p-4 space-y-2' : 'p-2 space-y-3'} transition-all duration-300 flex-1`}>
           <SidebarNavItem id="dashboard" label="Overview" icon="📊" />
           <SidebarNavItem id="logs" label="All Daily Logs" icon="📋" />
+          <SidebarNavItem id="evaluations" label="Weekly Evaluations" icon="🎯" />
           <SidebarNavItem id="reports" label="Generated Reports" icon="📄" />
           <SidebarNavItem id="summaries" label="Weekly Summaries" icon="📈" />
-          <SidebarNavItem id="analytics" label="Analytics" icon="📊" />
-          <SidebarNavItem id="users" label="User Management" icon="👥" />
         </div>
       </div>
 
@@ -333,16 +349,14 @@ const AdminDashboard = () => {
                 {activeTab === 'logs' && '📋 All Daily Logs'}
                 {activeTab === 'reports' && '📄 Generated Reports'}
                 {activeTab === 'summaries' && '📈 Weekly Summaries'}
-                {activeTab === 'analytics' && '📊 Analytics Dashboard'}
-                {activeTab === 'users' && '👥 User Management'}
+                {activeTab === 'evaluations' && '📊 Weekly Evaluations'}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
                 {activeTab === 'dashboard' && 'Monitor system performance and key metrics'}
                 {activeTab === 'logs' && 'View and manage all intern daily log submissions'}
                 {activeTab === 'reports' && 'Access AI-generated reports and summaries'}
                 {activeTab === 'summaries' && 'Review weekly progress summaries'}
-                {activeTab === 'analytics' && 'Analyze trends and performance data'}
-                {activeTab === 'users' && 'Manage intern accounts and permissions'}
+                {activeTab === 'evaluations' && 'Review weekly self-evaluations'}
               </p>
             </div>
             
@@ -396,6 +410,13 @@ const AdminDashboard = () => {
                     icon="📋"
                   />
                   <StatsCard 
+                    title="Weekly Evaluations" 
+                    value={evaluations.length} 
+                    subtitle="Self-evaluations submitted"
+                    color="purple"
+                    icon="🎯"
+                  />
+                  <StatsCard 
                     title="Total Hours" 
                     value={logs.reduce((sum, log) => sum + parseFloat(log.time_spent || log.timeSpent || 0), 0).toFixed(1)} 
                     subtitle="Hours worked"
@@ -406,15 +427,8 @@ const AdminDashboard = () => {
                     title="Reports Generated" 
                     value={reports.length} 
                     subtitle="Weekly & final reports"
-                    color="purple"
-                    icon="📄"
-                  />
-                  <StatsCard 
-                    title="Avg Daily Hours" 
-                    value={logs.length > 0 ? (logs.reduce((sum, log) => sum + parseFloat(log.time_spent || log.timeSpent || 0), 0) / logs.length).toFixed(1) : '0.0'} 
-                    subtitle="Per day productivity"
                     color="orange"
-                    icon="📊"
+                    icon="📄"
                   />
                 </div>
 
@@ -662,19 +676,81 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {activeTab === 'analytics' && (
-              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                <div className="text-gray-400 text-6xl mb-4">📊</div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Analytics Dashboard</h3>
-                <p className="text-gray-500 dark:text-gray-400">Advanced analytics and reporting features coming soon!</p>
-              </div>
-            )}
-
-            {activeTab === 'users' && (
-              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                <div className="text-gray-400 text-6xl mb-4">👥</div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">User Management</h3>
-                <p className="text-gray-500 dark:text-gray-400">User administration features coming soon!</p>
+            {activeTab === 'evaluations' && (
+              <div className="space-y-6">
+                {evaluations.length === 0 ? (
+                  <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div className="mb-4">
+                      <svg className="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No evaluations submitted yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400">Weekly self-evaluations submitted by interns will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {evaluations.map((evaluation, index) => (
+                      <div key={index} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-6 hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h4 className="text-lg font-bold text-gray-800 dark:text-white mb-1">
+                              📊 {evaluation.intern_name || evaluation.internName} - Week: {evaluation.week_start_date && evaluation.week_end_date ? 
+                                 `${formatLocalDate(evaluation.week_start_date)} - ${formatLocalDate(evaluation.week_end_date)}` : 
+                                 'Date not specified'}
+                            </h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Submitted on {formatLocalDate(evaluation.created_at)}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              evaluation.productivity >= 4 
+                                ? 'bg-green-500 text-white' 
+                              : evaluation.productivity >= 3 
+                                ? 'bg-yellow-500 text-white' 
+                                : 'bg-red-500 text-white'
+                            }`}>
+                              ⭐ {evaluation.productivity || 'N/A'}/5
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-3 border border-green-200 dark:border-green-700">
+                            <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">🏆 Key Accomplishments</p>
+                            <p className="text-green-800 dark:text-green-200">{evaluation.accomplishments || 'No accomplishments listed'}</p>
+                          </div>
+                          
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+                            <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">🎯 Key Learnings</p>
+                            <p className="text-blue-800 dark:text-blue-200">{evaluation.learnings || 'No learnings noted'}</p>
+                          </div>
+                          
+                          {evaluation.challenges && (
+                            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-lg p-3 border border-orange-200 dark:border-orange-700">
+                              <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">⚠️ Challenges</p>
+                              <p className="text-orange-800 dark:text-orange-200">{evaluation.challenges}</p>
+                            </div>
+                          )}
+                          
+                          {evaluation.goals && (
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-700">
+                              <p className="text-sm font-medium text-purple-700 dark:text-purple-300 mb-1">🎯 Goals for Next Week</p>
+                              <p className="text-purple-800 dark:text-purple-200">{evaluation.goals}</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Submitted: {formatLocalDateTime(evaluation.created_at || evaluation.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
